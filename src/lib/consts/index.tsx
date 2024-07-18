@@ -1,1 +1,1 @@
-export * from "./SUPPORTED_CONTRACTS";
+export * from "./SUPPORTED_CONTRACTS_SEPOLIA";
