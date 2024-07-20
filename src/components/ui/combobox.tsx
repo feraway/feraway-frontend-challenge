@@ -22,12 +22,13 @@ import {
 type ComboboxProps = {
   options: { value: string; label: string }[];
   itemName: string;
+  value?: string;
+  setValue: (value?: string) => void;
 };
 
 export function Combobox(props: ComboboxProps) {
-  const { options, itemName } = props;
+  const { options, itemName, value, setValue } = props;
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
