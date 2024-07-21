@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
 import { Combobox } from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
 import { SUPPORTED_CONTRACTS_SEPOLIA } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
+import { useStore } from "@/store";
 
 export default function Home() {
   const account = useAccount();
-  const [contract, setContract] = useState<string>();
+  const { targetAddress, setTargetAddress, contract, setContract } = useStore();
 
   const selectedContract = contract
     ? SUPPORTED_CONTRACTS_SEPOLIA[
@@ -58,6 +60,11 @@ export default function Home() {
           Balance:{" "}
           {balance ? formatUnits(balance, selectedContract?.decimals) : "---"}
         </h2>
+        <h2 className="text-2xl font-semibold mb-5">Target Address:</h2>
+        <Input
+          value={targetAddress}
+          onChange={(e) => setTargetAddress(e.target.value)}
+        />
       </main>
     </>
   );
