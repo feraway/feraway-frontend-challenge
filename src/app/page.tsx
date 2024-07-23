@@ -7,6 +7,7 @@ import { SUPPORTED_CONTRACTS_SEPOLIA } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { formatUnits, parseUnits, type Address } from "viem";
+import { isValidEvmAddress } from "@/lib/utils/isValidEvmAddress";
 import { useStore } from "@/store";
 import {
   Select,
@@ -55,7 +56,8 @@ export default function Home() {
     abi: selectedContract?.abi,
     functionName: "allowance",
     args: [account.address, targetAddress],
-    enabled: !!contract && !!targetAddress,
+    enabled:
+      !!contract && !!targetAddress && operationType === OPERATIONS.ALLOWANCE,
   });
 
   const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
@@ -67,6 +69,10 @@ export default function Home() {
         ].name,
     })
   );
+
+  // Input validations
+
+  const isTargetAddressInvalid = !isValidEvmAddress(targetAddress);
 
   return (
     <>
@@ -97,7 +103,7 @@ export default function Home() {
         <p className="mb-5">What would you like to do?</p>
         <Select
           value={operationType}
-          onValueChange={setOperationType}
+          onValueChange={(o: OPERATIONS) => setOperationType(o)}
           disabled={!contract}
         >
           <SelectTrigger className="w-[180px]">
@@ -116,6 +122,9 @@ export default function Home() {
           onChange={(e) => setTargetAddress(e.target.value as Address)}
           className="max-w-96"
         />
+        {!!contract && !!targetAddress && isTargetAddressInvalid && (
+          <p className="text-red-700 my-3">Please enter a valid EVM address</p>
+        )}
         {operationType === OPERATIONS.ALLOWANCE && !!targetAddress && (
           <p className="my-5">
             Allowance:{" "}
@@ -147,7 +156,7 @@ export default function Home() {
                 });
               }}
             >
-              Transfer
+              Transfer Tokens
             </Button>
           )}
           {operationType === OPERATIONS.ALLOWANCE && (
@@ -164,7 +173,7 @@ export default function Home() {
                 });
               }}
             >
-              Allowance
+              Set Allowance
             </Button>
           )}
           {operationType === OPERATIONS.MINT && (
@@ -182,11 +191,17 @@ export default function Home() {
                 });
               }}
             >
-              Mint
+              Mint Tokens
             </Button>
           )}
-          {!operationType && (
-            <Button disabled>Please select an operation to perform</Button>
+          {(!operationType || !contract) && (
+            <Button disabled>
+              {!contract
+                ? "Please select a token"
+                : !operationType
+                ? "Please select an operation to perform"
+                : ""}
+            </Button>
           )}
         </div>
       </main>
