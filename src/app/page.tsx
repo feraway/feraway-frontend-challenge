@@ -1,11 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SUPPORTED_CONTRACTS_SEPOLIA } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { formatUnits, parseUnits, type Address } from "viem";
 import { isValidEvmAddress } from "@/lib/utils/isValidEvmAddress";
 import { useStore } from "@/store";
@@ -23,12 +28,30 @@ enum OPERATIONS {
   TRANSFER = "TRANSFER",
 }
 
+const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
+  (contract) => ({
+    value: contract,
+    label:
+      SUPPORTED_CONTRACTS_SEPOLIA[
+        contract as keyof typeof SUPPORTED_CONTRACTS_SEPOLIA
+      ].name,
+  })
+);
+
 export default function Home() {
   const account = useAccount();
   const { targetAddress, setTargetAddress, contract, setContract } = useStore();
-  const { writeContract, status: writeContractStatus } = useWriteContract();
+  const {
+    writeContract,
+    status: writeContractStatus,
+    data: writeContractTxHash,
+  } = useWriteContract();
   const [amount, setAmount] = useState();
   const [operationType, setOperationType] = useState<OPERATIONS>();
+
+  const { data: { blockHash } = {} } = useWaitForTransactionReceipt({
+    hash: writeContractTxHash,
+  });
 
   const selectedContract = contract
     ? SUPPORTED_CONTRACTS_SEPOLIA[
@@ -36,22 +59,17 @@ export default function Home() {
       ]
     : undefined;
 
-  const { data: balance } = useReadContract({
+  const { data: balance, refetch: refetchBalance } = useReadContract({
     address: selectedContract?.address,
     abi: selectedContract?.abi,
     functionName: "balanceOf",
     args: [account.address],
     enabled: !!contract,
+    refetchInterval: 1000,
+    cacheTime: 0,
   });
 
-  const {
-    data: allowance,
-    error,
-    failureReason,
-    fetchStatus,
-    isLoading,
-    status,
-  } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: selectedContract?.address,
     abi: selectedContract?.abi,
     functionName: "allowance",
@@ -60,26 +78,42 @@ export default function Home() {
       !!contract && !!targetAddress && operationType === OPERATIONS.ALLOWANCE,
   });
 
-  const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
-    (contract) => ({
-      value: contract,
-      label:
-        SUPPORTED_CONTRACTS_SEPOLIA[
-          contract as keyof typeof SUPPORTED_CONTRACTS_SEPOLIA
-        ].name,
-    })
-  );
+  useEffect(() => {
+    if (blockHash) {
+      if (
+        operationType === OPERATIONS.TRANSFER ||
+        operationType === OPERATIONS.MINT
+      ) {
+        refetchBalance();
+      }
+      if (operationType === OPERATIONS.ALLOWANCE) {
+        refetchAllowance();
+      }
+    }
+  }, [blockHash]);
 
   // Input validations
 
-  const isTargetAddressInvalid = !isValidEvmAddress(targetAddress);
+  const isTargetAddressValid =
+    !!targetAddress && isValidEvmAddress(targetAddress);
+  const isTransferAmountValid =
+    !!balance &&
+    !!amount &&
+    balance >= parseUnits(amount, selectedContract?.decimals || 0);
+
+  // Buttons validations
+  const isMintDisabled = !contract || !isTargetAddressValid;
+  const isTransferDisabled =
+    !contract || !isTargetAddressValid || !isTransferAmountValid;
+  const isAllowanceDisabled =
+    !contract || !isTargetAddressValid || (!amount && amount !== 0);
 
   return (
     <>
       <header className="flex justify-end p-1">
         <ConnectButton />
       </header>
-      <main className="flex min-h-screen flex-col items-center justify-start p-24">
+      <main className="flex min-h-screen flex-col items-center justify-start p-11">
         <h1 className="text-3xl font-semibold mb-5">
           Wonderland Frontend Challenge
         </h1>
@@ -122,13 +156,13 @@ export default function Home() {
           onChange={(e) => setTargetAddress(e.target.value as Address)}
           className="max-w-96"
         />
-        {!!contract && !!targetAddress && isTargetAddressInvalid && (
+        {!!contract && !!targetAddress && !isTargetAddressValid && (
           <p className="text-red-700 my-3">Please enter a valid EVM address</p>
         )}
         {operationType === OPERATIONS.ALLOWANCE && !!targetAddress && (
-          <p className="my-5">
-            Allowance:{" "}
-            {allowance
+          <p className="mt-5">
+            Current allowance for this address:{" "}
+            {!!allowance || allowance === BigInt(0)
               ? formatUnits(allowance, selectedContract?.decimals ?? 0)
               : "---"}{" "}
             {selectedContract?.name}
@@ -136,14 +170,25 @@ export default function Home() {
         )}
         <h2 className="text-2xl font-semibold my-5">Amount:</h2>
         <Input
+          type="number"
           className="max-w-96"
           disabled={!contract || !operationType}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
+        {!!contract &&
+          !!balance &&
+          !!amount &&
+          !isTransferAmountValid &&
+          operationType === OPERATIONS.TRANSFER && (
+            <p className="text-red-700 my-5">
+              Your transfer amount is larger than your balance
+            </p>
+          )}
         <div className="my-5 w-96 flex justify-center">
           {operationType === OPERATIONS.TRANSFER && (
             <Button
+              disabled={isTransferDisabled}
               onClick={() => {
                 writeContract({
                   address: selectedContract?.address,
@@ -161,6 +206,7 @@ export default function Home() {
           )}
           {operationType === OPERATIONS.ALLOWANCE && (
             <Button
+              disabled={isAllowanceDisabled}
               onClick={() => {
                 writeContract({
                   address: selectedContract?.address,
@@ -178,6 +224,7 @@ export default function Home() {
           )}
           {operationType === OPERATIONS.MINT && (
             <Button
+              disabled={isMintDisabled}
               onClick={() => {
                 writeContract({
                   address: selectedContract?.address,
