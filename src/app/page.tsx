@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { ErrorDialog } from "@/components/error-dialog";
 
 enum OPERATIONS {
   MINT = "MINT",
@@ -46,10 +47,12 @@ export default function Home() {
     writeContract,
     status: writeContractStatus,
     data: writeContractTxHash,
+    error: writeContractError,
   } = useWriteContract();
-  const [amount, setAmount] = useState();
+  const [amount, setAmount] = useState("");
   const [operationType, setOperationType] = useState<OPERATIONS>();
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const { data: { blockHash } = {} } = useWaitForTransactionReceipt({
     hash: writeContractTxHash,
@@ -79,6 +82,15 @@ export default function Home() {
     enabled:
       !!contract && !!targetAddress && operationType === OPERATIONS.ALLOWANCE,
   });
+
+  useEffect(() => {
+    if (writeContractStatus === "error") {
+      setErrorMessage(
+        (writeContractError as { shortMessage?: string })?.shortMessage ||
+          "An error ocurred"
+      );
+    }
+  }, [writeContractStatus]);
 
   useEffect(() => {
     if (blockHash) {
@@ -132,6 +144,17 @@ export default function Home() {
     }
     return "";
   };
+
+  const getConfirmationDialogTitle = (): string =>
+    `Please confirm ${
+      operationType === OPERATIONS.TRANSFER
+        ? "transfer"
+        : operationType === OPERATIONS.MINT
+        ? "mint"
+        : operationType === OPERATIONS.ALLOWANCE
+        ? "allowance approve"
+        : ""
+    }`;
 
   // Input validations
   const isTargetAddressValid =
@@ -262,6 +285,7 @@ export default function Home() {
         </div>
       </main>
       <ConfirmationDialog
+        title={getConfirmationDialogTitle()}
         description={getConfirmationDialogDescription()}
         open={confirmationDialogOpen}
         onConfirm={() => {
@@ -269,6 +293,13 @@ export default function Home() {
           setConfirmationDialogOpen(false);
         }}
         onCancel={() => setConfirmationDialogOpen(false)}
+      />
+      <ErrorDialog
+        open={!!errorMessage}
+        description={errorMessage}
+        onConfirm={() => {
+          setErrorMessage("");
+        }}
       />
     </>
   );

@@ -13,7 +13,7 @@ type ConfirmationDialogProps = {
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  title?: string;
+  title: string;
   description: string;
   cancelButtonText?: string;
   confirmButtonText?: string;
@@ -34,7 +34,7 @@ export const ConfirmationDialog = (props: ConfirmationDialogProps) => {
     <AlertDialog open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          {!!title && <AlertDialogTitle>{title}</AlertDialogTitle>}
+          <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
