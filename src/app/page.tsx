@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { ErrorDialog } from "@/components/error-dialog";
+import { maxUint256, numberToHex } from "viem";
+import { CheckboxWithText } from "@/components/checkbox-with-text";
 
 enum OPERATIONS {
   MINT = "MINT",
@@ -53,6 +55,7 @@ export default function Home() {
   const [operationType, setOperationType] = useState<OPERATIONS>();
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [maxAllowanceChecked, setMaxAllowanceChecked] = useState(false);
 
   const { data: { blockHash } = {} } = useWaitForTransactionReceipt({
     hash: writeContractTxHash,
@@ -93,6 +96,10 @@ export default function Home() {
   }, [writeContractStatus]);
 
   useEffect(() => {
+    setMaxAllowanceChecked(false);
+  }, [operationType]);
+
+  useEffect(() => {
     if (blockHash) {
       if (
         operationType === OPERATIONS.TRANSFER ||
@@ -128,7 +135,9 @@ export default function Home() {
         functionName: "approve",
         args: [
           targetAddress as Address,
-          parseUnits(amount, selectedContract?.decimals),
+          maxAllowanceChecked
+            ? maxUint256
+            : parseUnits(amount, selectedContract?.decimals),
         ],
       });
     }
@@ -140,7 +149,11 @@ export default function Home() {
     } else if (operationType === OPERATIONS.MINT) {
       return `You are about to mint ${amount} ${selectedContract?.name} for the address ${targetAddress}. Do you wish to proceed?`;
     } else if (operationType === OPERATIONS.ALLOWANCE) {
-      return `You are about to approve an allowance of ${amount} ${selectedContract?.name} for the address ${targetAddress}. Do you wish to proceed?`;
+      return `You are about to approve an allowance of ${
+        maxAllowanceChecked ? "MAX" : amount
+      } ${
+        selectedContract?.name
+      } for the address ${targetAddress}. Do you wish to proceed?`;
     }
     return "";
   };
@@ -169,7 +182,7 @@ export default function Home() {
   const isTransferDisabled =
     !contract || !isTargetAddressValid || !isTransferAmountValid;
   const isAllowanceDisabled =
-    !contract || !isTargetAddressValid || (!amount && amount !== 0);
+    !contract || !isTargetAddressValid || (!amount && !maxAllowanceChecked);
 
   return (
     <>
@@ -223,22 +236,34 @@ export default function Home() {
           <p className="text-red-700 my-3">Please enter a valid EVM address</p>
         )}
         {operationType === OPERATIONS.ALLOWANCE && !!targetAddress && (
-          <p className="mt-5">
-            Current allowance for this address:{" "}
-            {!!allowance || allowance === BigInt(0)
-              ? formatUnits(allowance, selectedContract?.decimals ?? 0)
-              : "---"}{" "}
-            {selectedContract?.name}
-          </p>
+          <>
+            <p className="mt-5">
+              Current allowance for this address:{" "}
+              {!!allowance || allowance === BigInt(0)
+                ? formatUnits(allowance, selectedContract?.decimals ?? 0)
+                : "---"}{" "}
+              {selectedContract?.name}
+            </p>
+          </>
         )}
         <h2 className="text-2xl font-semibold my-5">Amount:</h2>
         <Input
           type="number"
           className="max-w-96"
-          disabled={!contract || !operationType}
+          disabled={!contract || !operationType || maxAllowanceChecked}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
+        {operationType === OPERATIONS.ALLOWANCE && (
+          <div className="max-w-72 my-3">
+            <CheckboxWithText
+              labelText="Use max allowance?"
+              secondaryText="By giving an address max allowance they have control over all your funds for the desired token"
+              checked={maxAllowanceChecked}
+              onCheckedChange={setMaxAllowanceChecked}
+            />
+          </div>
+        )}
         {!!contract &&
           !!balance &&
           !!amount &&
