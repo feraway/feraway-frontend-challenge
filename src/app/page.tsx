@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 enum OPERATIONS {
   MINT = "MINT",
@@ -48,6 +49,7 @@ export default function Home() {
   } = useWriteContract();
   const [amount, setAmount] = useState();
   const [operationType, setOperationType] = useState<OPERATIONS>();
+  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
 
   const { data: { blockHash } = {} } = useWaitForTransactionReceipt({
     hash: writeContractTxHash,
@@ -92,8 +94,46 @@ export default function Home() {
     }
   }, [blockHash]);
 
-  // Input validations
+  const confirmTransaction = (): void => {
+    if (operationType === OPERATIONS.TRANSFER) {
+      writeContract({
+        address: selectedContract?.address,
+        abi: selectedContract?.abi,
+        functionName: "transfer",
+        args: [targetAddress, parseUnits(amount, selectedContract?.decimals)],
+      });
+    } else if (operationType === OPERATIONS.MINT) {
+      writeContract({
+        address: selectedContract?.address,
+        abi: selectedContract?.abi,
+        functionName: "mint",
+        args: [account.address, parseUnits(amount, selectedContract?.decimals)],
+      });
+    } else if (operationType === OPERATIONS.ALLOWANCE) {
+      writeContract({
+        address: selectedContract?.address,
+        abi: selectedContract?.abi,
+        functionName: "approve",
+        args: [
+          targetAddress as Address,
+          parseUnits(amount, selectedContract?.decimals),
+        ],
+      });
+    }
+  };
 
+  const getConfirmationDialogDescription = (): string => {
+    if (operationType === OPERATIONS.TRANSFER) {
+      return `You are about to transfer ${amount} ${selectedContract?.name} to the address ${targetAddress}. Do you wish to proceed?`;
+    } else if (operationType === OPERATIONS.MINT) {
+      return `You are about to mint ${amount} ${selectedContract?.name} for the address ${targetAddress}. Do you wish to proceed?`;
+    } else if (operationType === OPERATIONS.ALLOWANCE) {
+      return `You are about to approve an allowance of ${amount} ${selectedContract?.name} for the address ${targetAddress}. Do you wish to proceed?`;
+    }
+    return "";
+  };
+
+  // Input validations
   const isTargetAddressValid =
     !!targetAddress && isValidEvmAddress(targetAddress);
   const isTransferAmountValid =
@@ -189,17 +229,7 @@ export default function Home() {
           {operationType === OPERATIONS.TRANSFER && (
             <Button
               disabled={isTransferDisabled}
-              onClick={() => {
-                writeContract({
-                  address: selectedContract?.address,
-                  abi: selectedContract?.abi,
-                  functionName: "transfer",
-                  args: [
-                    targetAddress,
-                    parseUnits(amount, selectedContract?.decimals),
-                  ],
-                });
-              }}
+              onClick={() => setConfirmationDialogOpen(true)}
             >
               Transfer Tokens
             </Button>
@@ -207,17 +237,7 @@ export default function Home() {
           {operationType === OPERATIONS.ALLOWANCE && (
             <Button
               disabled={isAllowanceDisabled}
-              onClick={() => {
-                writeContract({
-                  address: selectedContract?.address,
-                  abi: selectedContract?.abi,
-                  functionName: "approve",
-                  args: [
-                    targetAddress as Address,
-                    parseUnits(amount, selectedContract?.decimals),
-                  ],
-                });
-              }}
+              onClick={() => setConfirmationDialogOpen(true)}
             >
               Set Allowance
             </Button>
@@ -225,18 +245,7 @@ export default function Home() {
           {operationType === OPERATIONS.MINT && (
             <Button
               disabled={isMintDisabled}
-              onClick={() => {
-                writeContract({
-                  address: selectedContract?.address,
-                  abi: selectedContract?.abi,
-                  functionName: "mint",
-                  args: [
-                    account.address,
-                    parseUnits(amount, selectedContract?.decimals),
-                  ],
-                  enabled: !!contract,
-                });
-              }}
+              onClick={() => setConfirmationDialogOpen(true)}
             >
               Mint Tokens
             </Button>
@@ -252,6 +261,15 @@ export default function Home() {
           )}
         </div>
       </main>
+      <ConfirmationDialog
+        description={getConfirmationDialogDescription()}
+        open={confirmationDialogOpen}
+        onConfirm={() => {
+          confirmTransaction();
+          setConfirmationDialogOpen(false);
+        }}
+        onCancel={() => setConfirmationDialogOpen(false)}
+      />
     </>
   );
 }
