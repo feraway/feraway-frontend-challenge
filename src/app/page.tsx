@@ -197,7 +197,7 @@ export default function Home() {
   const isTransferAmountValid =
     !!balance &&
     !!amount &&
-    balance >= parseUnits(amount, selectedContract?.decimals || 0);
+    (balance as bigint) >= parseUnits(amount, selectedContract?.decimals || 0);
 
   // Buttons validations
   const isMintDisabled = !contract || !isTargetAddressValid;
@@ -234,7 +234,10 @@ export default function Home() {
           ) : (
             <>
               {balance
-                ? formatUnits(balance, selectedContract?.decimals ?? 0)
+                ? formatUnits(
+                    balance as bigint,
+                    selectedContract?.decimals ?? 0
+                  )
                 : "---"}{" "}
               {selectedContract?.name}
             </>
@@ -258,12 +261,29 @@ export default function Home() {
         <h2 className="text-2xl font-semibold my-5">Target Address:</h2>
         <Input
           value={targetAddress}
-          disabled={!contract || !operationType}
+          disabled={
+            !contract || !operationType || targetAddress === account.address
+          }
           onChange={(e) => setTargetAddress(e.target.value as Address)}
           className="max-w-96"
         />
         {!!contract && !!targetAddress && !isTargetAddressValid && (
           <p className="text-red-700 my-3">Please enter a valid EVM address</p>
+        )}
+        {operationType === OPERATIONS.MINT && (
+          <div className="max-w-72 my-3">
+            <CheckboxWithText
+              labelText="Mint for yourself?"
+              checked={targetAddress === account.address}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setTargetAddress(account.address);
+                } else {
+                  setTargetAddress(undefined);
+                }
+              }}
+            />
+          </div>
         )}
         {operationType === OPERATIONS.ALLOWANCE && !!targetAddress && (
           <>
@@ -272,7 +292,10 @@ export default function Home() {
               {isAllowanceMax
                 ? "MAX"
                 : !!allowance || allowance === BigInt(0)
-                ? formatUnits(allowance, selectedContract?.decimals ?? 0)
+                ? formatUnits(
+                    allowance as bigint,
+                    selectedContract?.decimals ?? 0
+                  )
                 : "---"}{" "}
               {selectedContract?.name}
             </p>
