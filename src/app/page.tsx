@@ -25,6 +25,7 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { ErrorDialog } from "@/components/error-dialog";
 import { maxUint256, numberToHex } from "viem";
 import { CheckboxWithText } from "@/components/checkbox-with-text";
+import { Spinner } from "@/components/ui/spinner";
 
 enum OPERATIONS {
   MINT = "MINT",
@@ -45,21 +46,26 @@ const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
 export default function Home() {
   const account = useAccount();
   const { targetAddress, setTargetAddress, contract, setContract } = useStore();
+  const [amount, setAmount] = useState("");
+  const [operationType, setOperationType] = useState<OPERATIONS>();
+  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [maxAllowanceChecked, setMaxAllowanceChecked] = useState(false);
   const {
     writeContract,
     status: writeContractStatus,
     data: writeContractTxHash,
     error: writeContractError,
   } = useWriteContract();
-  const [amount, setAmount] = useState("");
-  const [operationType, setOperationType] = useState<OPERATIONS>();
-  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [maxAllowanceChecked, setMaxAllowanceChecked] = useState(false);
+  const writeContractLoading = writeContractStatus === "pending";
 
-  const { data: { blockHash } = {} } = useWaitForTransactionReceipt({
-    hash: writeContractTxHash,
-  });
+  const { data: { blockHash } = {}, fetchStatus: txReceiptFetchStatus } =
+    useWaitForTransactionReceipt({
+      hash: writeContractTxHash,
+    });
+
+  const txReceiptLoading = txReceiptFetchStatus === "fetching";
 
   const selectedContract = contract
     ? SUPPORTED_CONTRACTS_SEPOLIA[
@@ -67,17 +73,28 @@ export default function Home() {
       ]
     : undefined;
 
-  const { data: balance, refetch: refetchBalance } = useReadContract({
+  const {
+    data: balance,
+    refetch: refetchBalance,
+    fetchStatus: isBalanceFetchStatus,
+  } = useReadContract({
     address: selectedContract?.address,
     abi: selectedContract?.abi,
     functionName: "balanceOf",
     args: [account.address],
     enabled: !!contract,
-    refetchInterval: 1000,
-    cacheTime: 0,
+    refetchOnWindowFocus: false,
   });
 
-  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+  const balanceLoading = isBalanceFetchStatus === "fetching";
+
+  const lastTransactionLoading = writeContractLoading || txReceiptLoading;
+
+  const {
+    data: allowance,
+    refetch: refetchAllowance,
+    isLoading: allowanceLoading,
+  } = useReadContract({
     address: selectedContract?.address,
     abi: selectedContract?.abi,
     functionName: "allowance",
@@ -205,10 +222,18 @@ export default function Home() {
         />
         <h2 className="text-2xl font-semibold my-5">
           Balance:{" "}
-          {balance
-            ? formatUnits(balance, selectedContract?.decimals ?? 0)
-            : "---"}{" "}
-          {selectedContract?.name}
+          {balanceLoading ? (
+            <>
+              <Spinner size={2} /> {selectedContract?.name}
+            </>
+          ) : (
+            <>
+              {balance
+                ? formatUnits(balance, selectedContract?.decimals ?? 0)
+                : "---"}{" "}
+              {selectedContract?.name}
+            </>
+          )}
         </h2>
         <p className="mb-5">What would you like to do?</p>
         <Select
@@ -309,21 +334,23 @@ export default function Home() {
           )}
         </div>
       </main>
+
       <ConfirmationDialog
         title={getConfirmationDialogTitle()}
         description={getConfirmationDialogDescription()}
         open={confirmationDialogOpen}
         onConfirm={() => {
           confirmTransaction();
+          setAmount("");
           setConfirmationDialogOpen(false);
         }}
         onCancel={() => setConfirmationDialogOpen(false)}
       />
       <ErrorDialog
-        open={!!errorMessage}
+        open={errorDialogOpen}
         description={errorMessage}
         onConfirm={() => {
-          setErrorMessage("");
+          setErrorDialogOpen(false);
         }}
       />
     </>
