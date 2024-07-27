@@ -167,15 +167,13 @@ export default function Home() {
 
   const getConfirmationDialogDescription = (): string => {
     if (operationType === OPERATIONS.TRANSFER) {
-      return `You are about to transfer ${amount} ${selectedContract?.name} to the address ${targetAddress}. Do you wish to proceed?`;
+      return `You are about to transfer ${amount} ${selectedContract?.name} to the address ${targetAddress}.`;
     } else if (operationType === OPERATIONS.MINT) {
-      return `You are about to mint ${amount} ${selectedContract?.name} for the address ${targetAddress}. Do you wish to proceed?`;
+      return `You are about to mint ${amount} ${selectedContract?.name} for the address ${targetAddress}.`;
     } else if (operationType === OPERATIONS.ALLOWANCE) {
       return `You are about to approve an allowance of ${
         maxAllowanceChecked ? "MAX" : amount
-      } ${
-        selectedContract?.name
-      } for the address ${targetAddress}. Do you wish to proceed?`;
+      } ${selectedContract?.name} for the address ${targetAddress}.`;
     }
     return "";
   };
@@ -200,11 +198,14 @@ export default function Home() {
     (balance as bigint) >= parseUnits(amount, selectedContract?.decimals || 0);
 
   // Buttons validations
-  const isMintDisabled = !contract || !isTargetAddressValid;
+  const isMintDisabled =
+    !contract || !isTargetAddressValid || !isTransferAmountValid;
   const isTransferDisabled =
     !contract || !isTargetAddressValid || !isTransferAmountValid;
   const isAllowanceDisabled =
     !contract || !isTargetAddressValid || (!amount && !maxAllowanceChecked);
+
+  const userAddress = account.address || null;
 
   return (
     <>
@@ -212,12 +213,11 @@ export default function Home() {
         <ConnectButton />
       </header>
       <main className="flex min-h-screen flex-col items-center justify-start p-11">
-        <h1 className="text-3xl font-semibold mb-5">
+        <h1 className="text-3xl font-semibold mb-5 text-center">
           Wonderland Frontend Challenge
         </h1>
         <p className="max-w-96 text-center mb-5">
-          This WebApp allows you to transfer tokens, set allowances and mint
-          tokens. To begin, please select a token from the list to operate with
+          Please select a token from the list to operate with
         </p>
         <Combobox
           options={comboboxOptions}
@@ -260,9 +260,11 @@ export default function Home() {
         </Select>
         <h2 className="text-2xl font-semibold my-5">Target Address:</h2>
         <Input
-          value={targetAddress}
+          value={targetAddress || ""}
           disabled={
-            !contract || !operationType || targetAddress === account.address
+            !contract ||
+            !operationType ||
+            (operationType === OPERATIONS.MINT && targetAddress === userAddress)
           }
           onChange={(e) => setTargetAddress(e.target.value as Address)}
           className="max-w-96"
@@ -271,15 +273,15 @@ export default function Home() {
           <p className="text-red-700 my-3">Please enter a valid EVM address</p>
         )}
         {operationType === OPERATIONS.MINT && (
-          <div className="max-w-72 my-3">
+          <div className="max-w-72 mt-5">
             <CheckboxWithText
               labelText="Mint for yourself?"
-              checked={targetAddress === account.address}
+              checked={targetAddress === userAddress}
               onCheckedChange={(checked) => {
                 if (checked) {
-                  setTargetAddress(account.address);
+                  setTargetAddress(userAddress);
                 } else {
-                  setTargetAddress(undefined);
+                  setTargetAddress(null);
                 }
               }}
             />
@@ -310,7 +312,7 @@ export default function Home() {
           onChange={(e) => setAmount(e.target.value)}
         />
         {operationType === OPERATIONS.ALLOWANCE && (
-          <div className="max-w-72 my-3">
+          <div className="max-w-72 mt-5">
             <CheckboxWithText
               labelText="Use max allowance?"
               secondaryText="By giving an address max allowance they have control over all your funds for the desired token"
@@ -363,7 +365,7 @@ export default function Home() {
             </Button>
           )}
         </div>
-        <div className="w-[38rem]">
+        <div className="md:w-[38rem] sm:w-full">
           <LastTransactionStatus
             isLoading={lastTransactionLoading}
             txHash={writeContractTxHash}

@@ -10,7 +10,7 @@ import {
 
 const storeInitialValue = {
   contract: undefined,
-  targetAddress: undefined,
+  targetAddress: null,
   setTargetAddress: () => undefined,
   setContract: () => undefined,
 };
@@ -19,8 +19,8 @@ const StoreContext = createContext<StoreType>(storeInitialValue);
 
 type StoreType = {
   contract?: Address;
-  targetAddress?: Address;
-  setTargetAddress: Dispatch<Address>;
+  targetAddress: Address | null;
+  setTargetAddress: Dispatch<Address | null>;
   setContract: Dispatch<Address>;
 };
 
@@ -55,7 +55,7 @@ function storeReducer(
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [store, dispatch] = useReducer(storeReducer, storeInitialValue);
 
-  const setTargetAddress = (targetAddress: Address) => {
+  const setTargetAddress = (targetAddress: Address | null) => {
     dispatch({
       type: ACTIONS.SET_TARGET_ADDRESS,
       payload: {
