@@ -26,6 +26,7 @@ import { ErrorDialog } from "@/components/error-dialog";
 import { maxUint256, numberToHex } from "viem";
 import { CheckboxWithText } from "@/components/checkbox-with-text";
 import { Spinner } from "@/components/ui/spinner";
+import { LastTransactionStatus } from "@/components/last-transaction-status";
 
 enum OPERATIONS {
   MINT = "MINT",
@@ -332,6 +333,14 @@ export default function Home() {
                 : ""}
             </Button>
           )}
+        </div>
+        <div className="w-[38rem]">
+          <LastTransactionStatus
+            isLoading={lastTransactionLoading}
+            txHash={writeContractTxHash}
+            error={errorMessage}
+            confirmed={!!blockHash}
+          />
         </div>
       </main>
 
