@@ -207,6 +207,21 @@ export default function Home() {
 
   const userAddress = account.address || null;
 
+  if (!userAddress)
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-start p-11 mt-12">
+        <h1 className="text-3xl font-semibold mb-5 text-center">
+          Wonderland Frontend Challenge
+        </h1>
+        <p className="max-w-96 text-center mb-5">
+          This WebApp allows you to transfer tokens, set allowances and mint
+          tokens.
+        </p>
+        <p className="mb-5">Please connect your wallet to start</p>
+        <ConnectButton />
+      </main>
+    );
+
   return (
     <>
       <header className="flex justify-end p-1">
