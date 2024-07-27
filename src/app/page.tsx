@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { ErrorDialog } from "@/components/error-dialog";
-import { maxUint256, numberToHex } from "viem";
+import { maxUint256 } from "viem";
 import { CheckboxWithText } from "@/components/checkbox-with-text";
 import { Spinner } from "@/components/ui/spinner";
 import { LastTransactionStatus } from "@/components/last-transaction-status";
@@ -103,6 +103,10 @@ export default function Home() {
     enabled:
       !!contract && !!targetAddress && operationType === OPERATIONS.ALLOWANCE,
   });
+  const isAllowanceMax =
+    allowance &&
+    formatUnits(allowance as bigint, selectedContract?.decimals ?? 0) ===
+      formatUnits(maxUint256, selectedContract?.decimals ?? 0);
 
   useEffect(() => {
     if (writeContractStatus === "error") {
@@ -265,7 +269,9 @@ export default function Home() {
           <>
             <p className="mt-5">
               Current allowance for this address:{" "}
-              {!!allowance || allowance === BigInt(0)
+              {isAllowanceMax
+                ? "MAX"
+                : !!allowance || allowance === BigInt(0)
                 ? formatUnits(allowance, selectedContract?.decimals ?? 0)
                 : "---"}{" "}
               {selectedContract?.name}
