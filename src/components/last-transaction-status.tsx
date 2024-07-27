@@ -12,7 +12,6 @@ type LastTransactionStatusProps = {
 export function LastTransactionStatus(props: LastTransactionStatusProps) {
   const { isLoading, txHash, error, confirmed } = props;
 
-  console.log("logger txHash", txHash);
   return (
     <Alert variant={isLoading ? "loading" : confirmed ? "success" : "default"}>
       {isLoading ? (
