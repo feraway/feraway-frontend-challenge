@@ -7,7 +7,7 @@ type CheckboxWithTextProps = {
   labelText: string;
   secondaryText?: string;
   checked: boolean | "indeterminate";
-  onCheckedChange: Dispatch<SetStateAction<boolean>>;
+  onCheckedChange: Dispatch<SetStateAction<boolean | "indeterminate">>;
 };
 
 export function CheckboxWithText(props: CheckboxWithTextProps) {
@@ -16,6 +16,7 @@ export function CheckboxWithText(props: CheckboxWithTextProps) {
     <div className="items-top flex space-x-2">
       <Checkbox
         id="terms1"
+        defaultChecked={false}
         onCheckedChange={onCheckedChange}
         checked={checked}
       />

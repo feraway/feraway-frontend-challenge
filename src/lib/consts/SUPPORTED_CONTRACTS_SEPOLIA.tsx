@@ -1,7 +1,17 @@
-import WT6_USDC_ABI from "@/lib/abis/WT6_USDC.json";
-import WT18_DAI_ABI from "@/lib/abis/WT18_DAI.json";
+import { type Address, type Abi } from "viem";
+import { WT6_USDC_ABI } from "@/lib/abis/WT6_USDC";
+import { WT18_DAI_ABI } from "@/lib/abis/WT18_DAI";
 
-export const SUPPORTED_CONTRACTS_SEPOLIA = {
+type SupportedContract = {
+  name: string;
+  abi: Abi;
+  address: Address;
+  decimals: number;
+};
+
+type SupportedContracts = Record<Address, SupportedContract>;
+
+export const SUPPORTED_CONTRACTS_SEPOLIA: SupportedContracts = {
   ["0x1D70D57ccD2798323232B2dD027B3aBcA5C00091"]: {
     name: "WT18_DAI",
     abi: WT18_DAI_ABI,

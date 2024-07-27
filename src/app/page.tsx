@@ -52,18 +52,24 @@ export default function Home() {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-  const [maxAllowanceChecked, setMaxAllowanceChecked] = useState(false);
+  const [maxAllowanceChecked, setMaxAllowanceChecked] = useState<
+    boolean | "indeterminate"
+  >(false);
   const {
     writeContract,
     status: writeContractStatus,
     data: writeContractTxHash,
     error: writeContractError,
   } = useWriteContract();
+
   const writeContractLoading = writeContractStatus === "pending";
 
   const { data: { blockHash } = {}, fetchStatus: txReceiptFetchStatus } =
     useWaitForTransactionReceipt({
       hash: writeContractTxHash,
+      query: {
+        refetchOnWindowFocus: false,
+      },
     });
 
   const txReceiptLoading = txReceiptFetchStatus === "fetching";
@@ -72,41 +78,49 @@ export default function Home() {
     ? SUPPORTED_CONTRACTS_SEPOLIA[
         contract as keyof typeof SUPPORTED_CONTRACTS_SEPOLIA
       ]
-    : undefined;
+    : SUPPORTED_CONTRACTS_SEPOLIA["0x1D70D57ccD2798323232B2dD027B3aBcA5C00091"];
 
   const {
     data: balance,
     refetch: refetchBalance,
-    fetchStatus: isBalanceFetchStatus,
+    fetchStatus: balanceFetchStatus,
   } = useReadContract({
-    address: selectedContract?.address,
-    abi: selectedContract?.abi,
+    address: selectedContract.address,
+    abi: selectedContract.abi,
     functionName: "balanceOf",
     args: [account.address],
-    enabled: !!contract,
-    refetchOnWindowFocus: false,
+    query: {
+      enabled: !!contract,
+      refetchOnWindowFocus: false,
+    },
   });
 
-  const balanceLoading = isBalanceFetchStatus === "fetching";
+  const balanceLoading = balanceFetchStatus === "fetching";
 
   const lastTransactionLoading = writeContractLoading || txReceiptLoading;
 
   const {
     data: allowance,
     refetch: refetchAllowance,
-    isLoading: allowanceLoading,
+    fetchStatus: allowanceFetchStatus,
   } = useReadContract({
-    address: selectedContract?.address,
-    abi: selectedContract?.abi,
+    address: selectedContract.address,
+    abi: selectedContract.abi,
     functionName: "allowance",
     args: [account.address, targetAddress],
-    enabled:
-      !!contract && !!targetAddress && operationType === OPERATIONS.ALLOWANCE,
+    query: {
+      enabled:
+        !!contract && !!targetAddress && operationType === OPERATIONS.ALLOWANCE,
+      refetchOnWindowFocus: false,
+    },
   });
+
+  const allowanceLoading = allowanceFetchStatus === "fetching";
+
   const isAllowanceMax =
     allowance &&
-    formatUnits(allowance as bigint, selectedContract?.decimals ?? 0) ===
-      formatUnits(maxUint256, selectedContract?.decimals ?? 0);
+    formatUnits(allowance as bigint, selectedContract.decimals) ===
+      formatUnits(maxUint256, selectedContract.decimals);
 
   useEffect(() => {
     if (writeContractStatus === "error") {
@@ -115,7 +129,7 @@ export default function Home() {
           "An error ocurred"
       );
     }
-  }, [writeContractStatus]);
+  }, [writeContractStatus, writeContractError]);
 
   useEffect(() => {
     setMaxAllowanceChecked(false);
@@ -133,33 +147,33 @@ export default function Home() {
         refetchAllowance();
       }
     }
-  }, [blockHash]);
+  }, [blockHash, operationType, refetchBalance, refetchAllowance]);
 
   const confirmTransaction = (): void => {
     if (operationType === OPERATIONS.TRANSFER) {
       writeContract({
-        address: selectedContract?.address,
-        abi: selectedContract?.abi,
+        address: selectedContract.address,
+        abi: selectedContract.abi,
         functionName: "transfer",
-        args: [targetAddress, parseUnits(amount, selectedContract?.decimals)],
+        args: [targetAddress, parseUnits(amount, selectedContract.decimals)],
       });
     } else if (operationType === OPERATIONS.MINT) {
       writeContract({
-        address: selectedContract?.address,
-        abi: selectedContract?.abi,
+        address: selectedContract.address,
+        abi: selectedContract.abi,
         functionName: "mint",
-        args: [account.address, parseUnits(amount, selectedContract?.decimals)],
+        args: [account.address, parseUnits(amount, selectedContract.decimals)],
       });
     } else if (operationType === OPERATIONS.ALLOWANCE) {
       writeContract({
-        address: selectedContract?.address,
-        abi: selectedContract?.abi,
+        address: selectedContract.address,
+        abi: selectedContract.abi,
         functionName: "approve",
         args: [
           targetAddress as Address,
           maxAllowanceChecked
             ? maxUint256
-            : parseUnits(amount, selectedContract?.decimals),
+            : parseUnits(amount, selectedContract.decimals),
         ],
       });
     }
@@ -167,13 +181,13 @@ export default function Home() {
 
   const getConfirmationDialogDescription = (): string => {
     if (operationType === OPERATIONS.TRANSFER) {
-      return `You are about to transfer ${amount} ${selectedContract?.name} to the address ${targetAddress}.`;
+      return `You are about to transfer ${amount} ${selectedContract.name} to the address ${targetAddress}.`;
     } else if (operationType === OPERATIONS.MINT) {
-      return `You are about to mint ${amount} ${selectedContract?.name} for the address ${targetAddress}.`;
+      return `You are about to mint ${amount} ${selectedContract.name} for the address ${targetAddress}.`;
     } else if (operationType === OPERATIONS.ALLOWANCE) {
       return `You are about to approve an allowance of ${
         maxAllowanceChecked ? "MAX" : amount
-      } ${selectedContract?.name} for the address ${targetAddress}.`;
+      } ${selectedContract.name} for the address ${targetAddress}.`;
     }
     return "";
   };
@@ -195,7 +209,7 @@ export default function Home() {
   const isTransferAmountValid =
     !!balance &&
     !!amount &&
-    (balance as bigint) >= parseUnits(amount, selectedContract?.decimals || 0);
+    (balance as bigint) >= parseUnits(amount, selectedContract.decimals);
 
   // Buttons validations
   const isMintDisabled =
@@ -244,17 +258,14 @@ export default function Home() {
           Balance:{" "}
           {balanceLoading ? (
             <>
-              <Spinner size={2} /> {selectedContract?.name}
+              <Spinner size={2} /> {selectedContract.name}
             </>
           ) : (
             <>
               {balance
-                ? formatUnits(
-                    balance as bigint,
-                    selectedContract?.decimals ?? 0
-                  )
+                ? formatUnits(balance as bigint, selectedContract.decimals)
                 : "---"}{" "}
-              {selectedContract?.name}
+              {selectedContract.name}
             </>
           )}
         </h2>
@@ -306,15 +317,23 @@ export default function Home() {
           <>
             <p className="mt-5">
               Current allowance for this address:{" "}
-              {isAllowanceMax
-                ? "MAX"
-                : !!allowance || allowance === BigInt(0)
-                ? formatUnits(
-                    allowance as bigint,
-                    selectedContract?.decimals ?? 0
-                  )
-                : "---"}{" "}
-              {selectedContract?.name}
+              {allowanceLoading ? (
+                <>
+                  <Spinner size={2} /> {selectedContract.name}
+                </>
+              ) : (
+                <>
+                  {isAllowanceMax
+                    ? "MAX"
+                    : !!allowance || allowance === BigInt(0)
+                    ? formatUnits(
+                        allowance as bigint,
+                        selectedContract.decimals
+                      )
+                    : "---"}
+                </>
+              )}{" "}
+              {selectedContract.name}
             </p>
           </>
         )}
@@ -322,7 +341,7 @@ export default function Home() {
         <Input
           type="number"
           className="max-w-96"
-          disabled={!contract || !operationType || maxAllowanceChecked}
+          disabled={!contract || !operationType || !!maxAllowanceChecked}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
