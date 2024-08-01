@@ -40,7 +40,7 @@ export function LastTransactionStatus(props: LastTransactionStatusProps) {
           ? ""
           : "Once you make a transaction, details will appear here"}
         {""}{" "}
-        {txHash && (
+        {txHash && (isLoading || error || confirmed) && (
           <Link
             href={`https://sepolia.etherscan.io/tx/${txHash}`}
             target="_blank"
