@@ -28,7 +28,12 @@ export function CheckboxWithText(props: CheckboxWithTextProps) {
           {labelText}
         </label>
         {secondaryText && (
-          <p className="text-sm text-muted-foreground">{secondaryText}</p>
+          <p
+            className="text-sm text-muted-foreground"
+            data-testid="checkbox-secondary-text"
+          >
+            {secondaryText}
+          </p>
         )}
       </div>
     </div>
