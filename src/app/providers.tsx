@@ -7,6 +7,8 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { sepolia } from "wagmi/chains";
 import { StoreProvider } from "@/store";
+import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundaryFallback } from "@/components/error-boundary-fallback";
 
 declare module "wagmi" {
   interface Register {
@@ -25,12 +27,14 @@ const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <StoreProvider>{children}</StoreProvider>
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ErrorBoundary fallbackRender={ErrorBoundaryFallback}>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider>
+            <StoreProvider>{children}</StoreProvider>
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ErrorBoundary>
   );
 }
