@@ -294,6 +294,7 @@ export default function Home() {
           }
           onChange={(e) => setTargetAddress(e.target.value as Address)}
           className="max-w-96"
+          placeholder="Please set a target address"
         />
         {!!contract && !!targetAddress && !isTargetAddressValid && (
           <p className="text-red-700 my-3">Please enter a valid EVM address</p>
@@ -344,6 +345,7 @@ export default function Home() {
           disabled={!contract || !operationType || !!maxAllowanceChecked}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
+          placeholder="Please set an amount"
         />
         {operationType === OPERATIONS.ALLOWANCE && (
           <div className="max-w-72 mt-5">
@@ -370,7 +372,7 @@ export default function Home() {
               disabled={isTransferDisabled}
               onClick={() => setConfirmationDialogOpen(true)}
             >
-              Transfer Tokens
+              Send Tokens
             </Button>
           )}
           {operationType === OPERATIONS.ALLOWANCE && (
