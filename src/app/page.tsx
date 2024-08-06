@@ -7,6 +7,7 @@ import { SUPPORTED_CONTRACTS_SEPOLIA } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   useAccount,
+  useChainId,
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -27,6 +28,9 @@ import { maxUint256 } from "viem";
 import { CheckboxWithText } from "@/components/checkbox-with-text";
 import { Spinner } from "@/components/ui/spinner";
 import { LastTransactionStatus } from "@/components/last-transaction-status";
+import { ConnectWallet } from "./components/connect-wallet";
+import { SwitchNetwork } from "./components/switch-network";
+import { Title } from "./components/title";
 
 enum OPERATIONS {
   MINT = "MINT",
@@ -46,6 +50,7 @@ const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
 
 export default function Home() {
   const account = useAccount();
+  const chainId = useChainId();
   const { targetAddress, setTargetAddress, contract, setContract } = useStore();
   const [amount, setAmount] = useState("");
   const [operationType, setOperationType] = useState<OPERATIONS>();
@@ -233,20 +238,11 @@ export default function Home() {
 
   const userAddress = account.address || null;
 
-  if (!userAddress)
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-start p-11 mt-12">
-        <h1 className="text-3xl font-semibold mb-5 text-center">
-          Wonderland Frontend Challenge
-        </h1>
-        <p className="max-w-96 text-center mb-5">
-          This WebApp allows you to transfer tokens, set allowances and mint
-          tokens.
-        </p>
-        <p className="mb-5">Please connect your wallet to start</p>
-        <ConnectButton />
-      </main>
-    );
+  if (!userAddress) return <ConnectWallet />;
+
+  if (account.chainId !== chainId) {
+    return <SwitchNetwork />;
+  }
 
   return (
     <>
@@ -254,9 +250,7 @@ export default function Home() {
         <ConnectButton />
       </header>
       <main className="flex min-h-screen flex-col items-center justify-start p-11">
-        <h1 className="text-3xl font-semibold mb-5 text-center">
-          Wonderland Frontend Challenge
-        </h1>
+        <Title />
         <p className="max-w-96 text-center mb-5">
           Please select a token from the list to operate with
         </p>
