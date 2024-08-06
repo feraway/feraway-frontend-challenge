@@ -128,6 +128,7 @@ export default function Home() {
         (writeContractError as { shortMessage?: string })?.shortMessage ||
           "An error ocurred"
       );
+      setErrorDialogOpen(true);
     }
   }, [writeContractStatus, writeContractError]);
 
@@ -211,13 +212,24 @@ export default function Home() {
     !!amount &&
     (balance as bigint) >= parseUnits(amount, selectedContract.decimals);
 
+  const showTransferAmountError =
+    !!contract &&
+    !!balance &&
+    !!amount &&
+    !isTransferAmountValid &&
+    operationType === OPERATIONS.TRANSFER;
+
   // Buttons validations
-  const isMintDisabled =
-    !contract || !isTargetAddressValid || !isTransferAmountValid;
-  const isTransferDisabled =
-    !contract || !isTargetAddressValid || !isTransferAmountValid;
-  const isAllowanceDisabled =
-    !contract || !isTargetAddressValid || (!amount && !maxAllowanceChecked);
+  const isAmountValid =
+    operationType === OPERATIONS.ALLOWANCE
+      ? !!amount || maxAllowanceChecked
+      : isTransferAmountValid;
+
+  const isConfirmButtonDisabled =
+    !contract ||
+    !isTargetAddressValid ||
+    !isTransferAmountValid ||
+    !isAmountValid;
 
   const userAddress = account.address || null;
 
@@ -340,57 +352,45 @@ export default function Home() {
           </>
         )}
         <h2 className="text-2xl font-semibold my-5">Amount:</h2>
-        <Input
-          type="number"
-          className="max-w-96"
-          disabled={!contract || !operationType || !!maxAllowanceChecked}
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Please set an amount"
-        />
-        {operationType === OPERATIONS.ALLOWANCE && (
-          <div className="max-w-72 mt-5">
-            <CheckboxWithText
-              labelText="Use max allowance?"
-              secondaryText="By giving an address max allowance they have control over all your funds for the desired token"
-              checked={maxAllowanceChecked}
-              onCheckedChange={setMaxAllowanceChecked}
-            />
-          </div>
-        )}
-        {!!contract &&
-          !!balance &&
-          !!amount &&
-          !isTransferAmountValid &&
-          operationType === OPERATIONS.TRANSFER && (
-            <p className="text-red-700 my-5">
+        <div className="w-full flex flex-col items-center min-h-[70px]">
+          <Input
+            type="number"
+            className="max-w-96 mb-1"
+            disabled={!contract || !operationType || !!maxAllowanceChecked}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Please set an amount"
+          />
+          {operationType === OPERATIONS.ALLOWANCE && (
+            <div className="max-w-72 mt-5">
+              <CheckboxWithText
+                labelText="Use max allowance?"
+                secondaryText="By giving an address max allowance they have control over all your funds for the desired token"
+                checked={maxAllowanceChecked}
+                onCheckedChange={setMaxAllowanceChecked}
+              />
+            </div>
+          )}
+          {showTransferAmountError && (
+            <p className="text-red-700">
               Your transfer amount is larger than your balance
             </p>
           )}
-        <div className="my-5 w-96 flex justify-center">
-          {operationType === OPERATIONS.TRANSFER && (
+        </div>
+        <div className="mt-3 mb-7 w-96 flex justify-center">
+          {operationType && (
             <Button
-              disabled={isTransferDisabled}
-              onClick={() => setConfirmationDialogOpen(true)}
-            >
-              Send Tokens
-            </Button>
-          )}
-          {operationType === OPERATIONS.ALLOWANCE && (
-            <Button
-              disabled={isAllowanceDisabled}
+              disabled={isConfirmButtonDisabled}
               onClick={() => setConfirmationDialogOpen(true)}
               role="confirm-button"
             >
-              Set Allowance
-            </Button>
-          )}
-          {operationType === OPERATIONS.MINT && (
-            <Button
-              disabled={isMintDisabled}
-              onClick={() => setConfirmationDialogOpen(true)}
-            >
-              Confirm Mint
+              {operationType === OPERATIONS.ALLOWANCE
+                ? "Set Allowance"
+                : operationType === OPERATIONS.TRANSFER
+                ? "Send Tokens"
+                : operationType === OPERATIONS.MINT
+                ? "Confirm Mint"
+                : null}
             </Button>
           )}
           {(!operationType || !contract) && (
