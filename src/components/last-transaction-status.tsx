@@ -13,7 +13,17 @@ export function LastTransactionStatus(props: LastTransactionStatusProps) {
   const { isLoading, txHash, error, confirmed } = props;
 
   return (
-    <Alert variant={isLoading ? "loading" : confirmed ? "success" : "default"}>
+    <Alert
+      variant={
+        isLoading
+          ? "loading"
+          : error
+          ? "destructive"
+          : confirmed
+          ? "success"
+          : "default"
+      }
+    >
       {isLoading ? (
         <RefreshCcw className="h-4 w-4" />
       ) : error ? (
@@ -45,6 +55,7 @@ export function LastTransactionStatus(props: LastTransactionStatusProps) {
             href={`https://sepolia.etherscan.io/tx/${txHash}`}
             target="_blank"
             className="underline inline-block w-full mt-1"
+            role="lastTxHash"
           >
             {txHash}
           </Link>

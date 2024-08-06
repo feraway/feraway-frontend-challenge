@@ -24,10 +24,11 @@ type ComboboxProps = {
   itemName: string;
   value?: string;
   setValue: (value?: string) => void;
+  role?: string;
 };
 
 export function Combobox(props: ComboboxProps) {
-  const { options, itemName, value, setValue } = props;
+  const { options, itemName, value, setValue, role = "combobox" } = props;
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -35,7 +36,7 @@ export function Combobox(props: ComboboxProps) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          role="combobox"
+          role={role}
           aria-expanded={open}
           className="w-[200px] justify-between"
         >

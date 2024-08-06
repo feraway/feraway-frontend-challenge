@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#e2e
+/tests/e2e/videos
+/tests/e2e/screenshots

@@ -253,6 +253,7 @@ export default function Home() {
           itemName="token"
           value={contract}
           setValue={(x) => setContract(x as Address)}
+          role="combobox-token"
         />
         <h2 className="text-2xl font-semibold my-5">
           Balance:{" "}
@@ -379,6 +380,7 @@ export default function Home() {
             <Button
               disabled={isAllowanceDisabled}
               onClick={() => setConfirmationDialogOpen(true)}
+              role="confirm-button"
             >
               Set Allowance
             </Button>
@@ -388,7 +390,7 @@ export default function Home() {
               disabled={isMintDisabled}
               onClick={() => setConfirmationDialogOpen(true)}
             >
-              Mint Tokens
+              Confirm Mint
             </Button>
           )}
           {(!operationType || !contract) && (
