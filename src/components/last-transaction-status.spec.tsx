@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 const txHash = "0x0000000000000000000000000000000000000000";
 const error = "There was an error in your transaction";
 const titlePartial = "Last transaction";
+
 describe("<LastTransactionStatus />", () => {
   test("It should show fallback text when loading === false", () => {
     render(<LastTransactionStatus isLoading={false} confirmed={false} />);
@@ -32,7 +33,7 @@ describe("<LastTransactionStatus />", () => {
         "Your last transaction is being processed, your balance or allowance will be updated once it finishes."
       )
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: txHash })).toHaveAttribute(
+    expect(screen.getByRole("lastTxHash")).toHaveAttribute(
       "href",
       `https://sepolia.etherscan.io/tx/${txHash}`
     );
@@ -47,9 +48,7 @@ describe("<LastTransactionStatus />", () => {
         "Your last transaction is being processed, your balance or allowance will be updated once it finishes."
       )
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: txHash })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("lastTxHash")).not.toBeInTheDocument();
   });
 
   test("It should show error title and description and txHash linking to sepolia scan when passed an error string", () => {
@@ -66,7 +65,7 @@ describe("<LastTransactionStatus />", () => {
     expect(
       screen.queryByText(`Your las transaction failed. Error: "${error}"`)
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: txHash })).toHaveAttribute(
+    expect(screen.getByRole("lastTxHash")).toHaveAttribute(
       "href",
       `https://sepolia.etherscan.io/tx/${txHash}`
     );
@@ -82,7 +81,7 @@ describe("<LastTransactionStatus />", () => {
     );
 
     expect(screen.queryByText(`${titlePartial} confirmed`)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: txHash })).toHaveAttribute(
+    expect(screen.getByRole("lastTxHash")).toHaveAttribute(
       "href",
       `https://sepolia.etherscan.io/tx/${txHash}`
     );
