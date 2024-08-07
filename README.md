@@ -4,7 +4,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First you need to set a Wallet Connect Project ID in `.env.local`
+First you need to create a `.env.local` file and set a Wallet Connect Project ID
 
 ```
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=yourProjectId
@@ -30,7 +30,7 @@ pnpm test:unit
 
 ### To run e2e tests
 
-This project uses synpress, which requires a Metamask wallet. The e2e flow will open a browser window, install metamask and configure the wallet with the given 12 words. This wallet will need some Sepolia Eth to run the tests.
+This project uses synpress, which requires a Metamask wallet. The e2e flow will open a browser window, install Metamask and configure the wallet with the given 12 words. This wallet will need some Sepolia Eth to run the tests.
 
 You need to add the following to `.env.local`
 
@@ -43,13 +43,13 @@ PLEASE USE A WALLET THAT IS SOLELY FOR TESTING
 
 You also need to create a file named `test-config.js` which exports the address you are going to be transfering funds and setting allowance to. This address needs to be a different address than the one providing the words.
 
-`test-config.js`:
+`/tests/e2e/test-config.js`:
 
 ```
 export const TARGET_WALLET = "0xReceivingWallet";
 ```
 
-After that, run the project with
+After that, run the project (if it's not running already) with
 
 ```
 pnpm dev
