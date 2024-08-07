@@ -3,13 +3,12 @@ import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SUPPORTED_CONTRACTS_SEPOLIA } from "@/lib/consts";
+import { SUPPORTED_CONTRACTS_SEPOLIA, OPERATIONS } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   useAccount,
   useChainId,
   useReadContract,
-  useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { formatUnits, parseUnits, type Address } from "viem";
@@ -31,12 +30,8 @@ import { LastTransactionStatus } from "@/components/last-transaction-status";
 import { ConnectWallet } from "./components/connect-wallet";
 import { SwitchNetwork } from "./components/switch-network";
 import { Title } from "./components/title";
-
-enum OPERATIONS {
-  MINT = "MINT",
-  ALLOWANCE = "ALLOWANCE",
-  TRANSFER = "TRANSFER",
-}
+import { useConfirmTransaction } from "@/lib/hooks";
+import { CheckedStateType } from "@/types";
 
 const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
   (contract) => ({
@@ -57,15 +52,29 @@ export default function Home() {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-  const [maxAllowanceChecked, setMaxAllowanceChecked] = useState<
-    boolean | "indeterminate"
-  >(false);
+  const [maxAllowanceChecked, setMaxAllowanceChecked] =
+    useState<CheckedStateType>(false);
+
+  const selectedContract = contract
+    ? SUPPORTED_CONTRACTS_SEPOLIA[
+        contract as keyof typeof SUPPORTED_CONTRACTS_SEPOLIA
+      ]
+    : SUPPORTED_CONTRACTS_SEPOLIA["0x1D70D57ccD2798323232B2dD027B3aBcA5C00091"];
+
   const {
-    writeContract,
-    status: writeContractStatus,
-    data: writeContractTxHash,
-    error: writeContractError,
-  } = useWriteContract();
+    confirmTransaction,
+    getConfirmationDialogDescription,
+    getConfirmationDialogTitle,
+    writeContractStatus,
+    writeContractTxHash,
+    writeContractError,
+  } = useConfirmTransaction({
+    operationType,
+    selectedContract,
+    targetAddress,
+    amount,
+    maxAllowanceChecked,
+  });
 
   const writeContractLoading = writeContractStatus === "pending";
 
@@ -78,12 +87,6 @@ export default function Home() {
     });
 
   const txReceiptLoading = txReceiptFetchStatus === "fetching";
-
-  const selectedContract = contract
-    ? SUPPORTED_CONTRACTS_SEPOLIA[
-        contract as keyof typeof SUPPORTED_CONTRACTS_SEPOLIA
-      ]
-    : SUPPORTED_CONTRACTS_SEPOLIA["0x1D70D57ccD2798323232B2dD027B3aBcA5C00091"];
 
   const {
     data: balance,
@@ -155,60 +158,6 @@ export default function Home() {
     }
   }, [blockHash, operationType, refetchBalance, refetchAllowance]);
 
-  const confirmTransaction = (): void => {
-    if (operationType === OPERATIONS.TRANSFER) {
-      writeContract({
-        address: selectedContract.address,
-        abi: selectedContract.abi,
-        functionName: "transfer",
-        args: [targetAddress, parseUnits(amount, selectedContract.decimals)],
-      });
-    } else if (operationType === OPERATIONS.MINT) {
-      writeContract({
-        address: selectedContract.address,
-        abi: selectedContract.abi,
-        functionName: "mint",
-        args: [account.address, parseUnits(amount, selectedContract.decimals)],
-      });
-    } else if (operationType === OPERATIONS.ALLOWANCE) {
-      writeContract({
-        address: selectedContract.address,
-        abi: selectedContract.abi,
-        functionName: "approve",
-        args: [
-          targetAddress as Address,
-          maxAllowanceChecked
-            ? maxUint256
-            : parseUnits(amount, selectedContract.decimals),
-        ],
-      });
-    }
-  };
-
-  const getConfirmationDialogDescription = (): string => {
-    if (operationType === OPERATIONS.TRANSFER) {
-      return `You are about to transfer ${amount} ${selectedContract.name} to the address ${targetAddress}.`;
-    } else if (operationType === OPERATIONS.MINT) {
-      return `You are about to mint ${amount} ${selectedContract.name} for the address ${targetAddress}.`;
-    } else if (operationType === OPERATIONS.ALLOWANCE) {
-      return `You are about to approve an allowance of ${
-        maxAllowanceChecked ? "MAX" : amount
-      } ${selectedContract.name} for the address ${targetAddress}.`;
-    }
-    return "";
-  };
-
-  const getConfirmationDialogTitle = (): string =>
-    `Please confirm ${
-      operationType === OPERATIONS.TRANSFER
-        ? "transfer"
-        : operationType === OPERATIONS.MINT
-        ? "mint"
-        : operationType === OPERATIONS.ALLOWANCE
-        ? "allowance approve"
-        : ""
-    }`;
-
   // Input validations
   const isTargetAddressValid =
     !!targetAddress && isValidEvmAddress(targetAddress);
@@ -225,20 +174,33 @@ export default function Home() {
     operationType === OPERATIONS.TRANSFER;
 
   // Buttons validations
-  const isAmountValid =
-    operationType === OPERATIONS.ALLOWANCE
-      ? !!amount || maxAllowanceChecked
-      : isTransferAmountValid;
 
-  const isConfirmButtonDisabled =
-    !contract ||
-    !isTargetAddressValid ||
-    !isTransferAmountValid ||
-    !isAmountValid;
+  const getIsButtonDisabled = () => {
+    if (
+      !contract ||
+      !isTargetAddressValid ||
+      (operationType !== OPERATIONS.ALLOWANCE && !amount)
+    ) {
+      return true;
+    }
+    if (operationType === OPERATIONS.TRANSFER && !isTransferAmountValid) {
+      return true;
+    }
+    if (
+      operationType === OPERATIONS.ALLOWANCE &&
+      !amount &&
+      !maxAllowanceChecked
+    ) {
+      return true;
+    }
+    return false;
+  };
 
   const userAddress = account.address || null;
 
-  if (!userAddress) return <ConnectWallet />;
+  if (!userAddress) {
+    return <ConnectWallet />;
+  }
 
   if (account.chainId !== chainId) {
     return <SwitchNetwork />;
@@ -374,7 +336,7 @@ export default function Home() {
         <div className="mt-3 mb-7 w-96 flex justify-center">
           {operationType && (
             <Button
-              disabled={isConfirmButtonDisabled}
+              disabled={getIsButtonDisabled()}
               onClick={() => setConfirmationDialogOpen(true)}
               role="confirm-button"
             >

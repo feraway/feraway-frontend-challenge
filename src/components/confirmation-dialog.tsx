@@ -36,7 +36,10 @@ export const ConfirmationDialog = (props: ConfirmationDialogProps) => {
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {description} <p className="mt-3">Do you wish to proceed?</p>
+            {description}
+            <span className="mt-3 w-full inline-block">
+              Do you wish to proceed?
+            </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
