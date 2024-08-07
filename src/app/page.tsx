@@ -146,6 +146,8 @@ export default function Home() {
           "An error ocurred"
       );
       setErrorDialogOpen(true);
+    } else {
+      setErrorMessage("");
     }
   }, [writeContractStatus, writeContractError]);
 
