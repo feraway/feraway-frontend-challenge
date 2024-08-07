@@ -1,36 +1,60 @@
+# Wonderland Frontend Challenge
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
 
-First, run the development server:
+First you need to set a Wallet Connect Project ID in `.env.local`
+
+```
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=yourProjectId
+```
+
+To install packages and run the program, we recommend using `pnpm`
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+# then
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Testing
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### To run unit tests:
 
-## Learn More
+```bash
+pnpm test:unit
+```
 
-To learn more about Next.js, take a look at the following resources:
+### To run e2e tests
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This project uses synpress, which requires a Metamask wallet. The e2e flow will open a browser window, install metamask and configure the wallet with the given 12 words. This wallet will need some Sepolia Eth to run the tests.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+You need to add the following to `.env.local`
 
-## Deploy on Vercel
+```
+SECRET_WORDS="twelve words of the wallet to run tests from"
+NETWORK_NAME=sepolia
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+PLEASE USE A WALLET THAT IS SOLELY FOR TESTING
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+You also need to create a file named `test-config.js` which exports the address you are going to be transfering funds and setting allowance to. This address needs to be a different address than the one providing the words.
+
+`test-config.js`:
+
+```
+export const TARGET_WALLET = "0xReceivingWallet";
+```
+
+## Features
+
+- Transfer, mint and set allowance for WT6_USDC and WT18_DAI
+- Last transaction confirmation on screen
+- Fetch balances and allowances only when needed and on transaction completion
+- Built-in a11y improvements from the Radix library
+- Mobile support
+- Full TypeScript support (including ABIs)
+- Wrong Network detection and huminized balances/allowances
