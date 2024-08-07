@@ -49,6 +49,18 @@ You also need to create a file named `test-config.js` which exports the address 
 export const TARGET_WALLET = "0xReceivingWallet";
 ```
 
+After that, run the project with
+
+```
+pnpm dev
+```
+
+and run the tests with
+
+```
+pnpm test:e2e
+```
+
 ## Features
 
 - Transfer, mint and set allowance for WT6_USDC and WT18_DAI
