@@ -51,14 +51,17 @@ export function LastTransactionStatus(props: LastTransactionStatusProps) {
           : "Once you make a transaction, details will appear here"}
         {""}{" "}
         {txHash && (isLoading || error || confirmed) && (
-          <Link
-            href={`https://sepolia.etherscan.io/tx/${txHash}`}
-            target="_blank"
-            className="underline inline-block w-full mt-1"
-            role="lastTxHash"
-          >
-            {txHash}
-          </Link>
+          <>
+            <p className="mt-3">Link to transaction:</p>
+            <Link
+              href={`https://sepolia.etherscan.io/tx/${txHash}`}
+              target="_blank"
+              className="underline inline-block break-all mt-1"
+              role="lastTxHash"
+            >
+              {txHash}
+            </Link>
+          </>
         )}
       </AlertDescription>
     </Alert>
