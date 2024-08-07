@@ -1,8 +1,23 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Combobox } from "@/components/ui/combobox";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  Combobox,
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Spinner,
+} from "@/components/ui";
+import {
+  ConfirmationDialog,
+  ErrorDialog,
+  CheckboxWithText,
+  LastTransactionStatus,
+} from "@/components";
+import { ConnectWallet, SwitchNetwork, Title } from "./components";
 import { SUPPORTED_CONTRACTS_SEPOLIA, OPERATIONS } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
@@ -20,22 +35,7 @@ import {
 } from "viem";
 import { isValidEvmAddress } from "@/lib/utils/isValidEvmAddress";
 import { useStore } from "@/store";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { ErrorDialog } from "@/components/error-dialog";
 import { maxUint256 } from "viem";
-import { CheckboxWithText } from "@/components/checkbox-with-text";
-import { Spinner } from "@/components/ui/spinner";
-import { LastTransactionStatus } from "@/components/last-transaction-status";
-import { ConnectWallet } from "./components/connect-wallet";
-import { SwitchNetwork } from "./components/switch-network";
-import { Title } from "./components/title";
 import { useConfirmTransaction } from "@/lib/hooks";
 import { CheckedStateType } from "@/types";
 import { countDecimals } from "@/lib/utils/countDecimals";

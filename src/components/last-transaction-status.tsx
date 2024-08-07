@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SquareCheckBig, RefreshCcw, CircleX } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
 
 type LastTransactionStatusProps = {
   isLoading: boolean;

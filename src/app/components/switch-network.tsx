@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { useSwitchChain, useChainId } from "wagmi";
 import { Title } from "./title";
 
