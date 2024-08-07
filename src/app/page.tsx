@@ -234,7 +234,7 @@ export default function Home() {
           setValue={(x) => setContract(x as Address)}
           role="combobox-token"
         />
-        <h2 className="text-2xl font-semibold my-5">
+        <h2 className="text-2xl font-semibold my-5 text-center text-wrap">
           Balance:{" "}
           {balanceLoading ? (
             <>
@@ -264,7 +264,7 @@ export default function Home() {
             <SelectItem value={OPERATIONS.MINT}>Mint Tokens</SelectItem>
           </SelectContent>
         </Select>
-        <h2 className="text-2xl font-semibold my-5">Target Address:</h2>
+        <h2 className="text-2xl font-semibold mb-5 mt-7">Target Address:</h2>
         <Input
           value={targetAddress || ""}
           disabled={
@@ -276,58 +276,64 @@ export default function Home() {
           className="max-w-96"
           placeholder="Please set a target address"
         />
-        {!!contract && !!targetAddress && !isTargetAddressValid && (
-          <p className="text-red-700 my-3">Please enter a valid EVM address</p>
-        )}
-        {operationType === OPERATIONS.MINT && (
-          <div className="max-w-72 mt-5">
-            <CheckboxWithText
-              labelText="Mint for yourself?"
-              checked={targetAddress === userAddress}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  setTargetAddress(userAddress);
-                } else {
-                  setTargetAddress(null);
-                }
-              }}
-            />
-          </div>
-        )}
-        {operationType === OPERATIONS.ALLOWANCE && !!targetAddress && (
-          <>
-            <p className="mt-5">
-              Current allowance for this address:{" "}
-              {allowanceLoading ? (
-                <>
-                  <Spinner size={2} /> {selectedContract.name}
-                </>
-              ) : (
-                <>
-                  {isAllowanceMax
-                    ? "MAX"
-                    : !!allowance || allowance === BigInt(0)
-                    ? formatUnits(
-                        allowance as bigint,
-                        selectedContract.decimals
-                      )
-                    : "---"}
-                </>
-              )}{" "}
-              {selectedContract.name}
+        <div className="w-full flex flex-col items-center min-h-[40px]">
+          {!!contract && !!targetAddress && !isTargetAddressValid && (
+            <p className="text-red-700 mt-3">
+              Please enter a valid EVM address
             </p>
-          </>
-        )}
-        <h2 className="text-2xl font-semibold my-5">Amount:</h2>
+          )}
+          {operationType === OPERATIONS.MINT && (
+            <div className="max-w-72 mt-5">
+              <CheckboxWithText
+                labelText="Mint for yourself?"
+                checked={targetAddress === userAddress}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setTargetAddress(userAddress);
+                  } else {
+                    setTargetAddress(null);
+                  }
+                }}
+              />
+            </div>
+          )}
+          {operationType === OPERATIONS.ALLOWANCE &&
+            !!targetAddress &&
+            isTargetAddressValid && (
+              <>
+                <p className="mt-3 text-center">
+                  Current allowance for this address:{" "}
+                  {allowanceLoading ? (
+                    <>
+                      <Spinner size={2} /> {selectedContract.name}
+                    </>
+                  ) : (
+                    <>
+                      {isAllowanceMax
+                        ? "MAX"
+                        : !!allowance || allowance === BigInt(0)
+                        ? formatUnits(
+                            allowance as bigint,
+                            selectedContract.decimals
+                          )
+                        : "---"}
+                    </>
+                  )}{" "}
+                  {selectedContract.name}
+                </p>
+              </>
+            )}
+        </div>
+        <h2 className="text-2xl font-semibold my-3">Amount:</h2>
+        <Input
+          type="number"
+          className="max-w-96 mb-1"
+          disabled={!contract || !operationType || !!maxAllowanceChecked}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="Please set an amount"
+        />
         <div className="w-full flex flex-col items-center min-h-[70px]">
-          <Input
-            type="number"
-            className="max-w-96 mb-1"
-            disabled={!contract || !operationType || !!maxAllowanceChecked}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Please set an amount"
-          />
           {operationType === OPERATIONS.ALLOWANCE && (
             <div className="max-w-72 mt-5">
               <CheckboxWithText
@@ -344,7 +350,7 @@ export default function Home() {
             </p>
           )}
         </div>
-        <div className="mt-3 mb-7 w-96 flex justify-center">
+        <div className="mt-5 mb-7 w-96 flex justify-center">
           {operationType && (
             <Button
               disabled={getIsButtonDisabled()}
