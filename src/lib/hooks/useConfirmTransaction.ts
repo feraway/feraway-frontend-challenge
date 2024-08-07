@@ -3,6 +3,7 @@ import { useWriteContract, useAccount } from "wagmi";
 import { OPERATIONS } from "@/lib/consts";
 import { maxUint256, parseUnits, type Address } from "viem";
 import { SupportedContractType, CheckedStateType } from "@/types";
+import { WT18_DAI_ABI, WT6_USDC_ABI } from "@/lib/abis";
 
 type ConfirmTransactionParametersType = {
   operationType?: OPERATIONS;
@@ -33,74 +34,125 @@ export function useConfirmTransaction(
   } = useWriteContract();
 
   const confirmTransaction = useCallback(() => {
-    if (!account.address) return;
+    if (!account.address || !targetAddress || !operationType) return;
 
-    if (operationType === OPERATIONS.TRANSFER) {
-      writeContract({
-        address: selectedContract.address,
-        abi: selectedContract.abi,
-        functionName: "transfer",
-        args: [targetAddress, parseUnits(amount, selectedContract.decimals)],
-      });
-    } else if (operationType === OPERATIONS.MINT) {
-      writeContract({
-        address: selectedContract.address,
-        abi: selectedContract.abi,
-        functionName: "mint",
-        args: [targetAddress, parseUnits(amount, selectedContract.decimals)],
-      });
-    } else if (operationType === OPERATIONS.ALLOWANCE) {
-      writeContract({
-        address: selectedContract.address,
-        abi: selectedContract.abi,
-        functionName: "approve",
-        args: [
-          targetAddress,
-          maxAllowanceChecked
-            ? maxUint256
-            : parseUnits(amount, selectedContract.decimals),
-        ],
-      });
-    }
+    /**
+     * I'm making distinct writeContract() calls per contract so I can directly set the contracts ABI, const asserted,
+     * and get type safety on the contract call. Doing something like { abi: selectedContract.abi } doesn't
+     * give you type safety (you can't dynamically set the abi or args AND get type safety, it has to be a const asserted
+     * abi or written inline).
+     * https://wagmi.sh/core/typescript#const-assert-abis-typed-data
+     */
+    const contractCalls = {
+      [OPERATIONS.TRANSFER]: () => {
+        const transferContractArgs: {
+          address: Address;
+          functionName: "transfer";
+          args: [Address, bigint];
+        } = {
+          address: selectedContract.address,
+          functionName: "transfer",
+          args: [targetAddress, parseUnits(amount, selectedContract.decimals)],
+        };
+
+        if (selectedContract.name === "WT18_DAI") {
+          writeContract({
+            abi: WT18_DAI_ABI,
+            ...transferContractArgs,
+          });
+        } else if (selectedContract.name === "WT6_USDC") {
+          writeContract({
+            abi: WT6_USDC_ABI,
+            ...transferContractArgs,
+          });
+        }
+      },
+      [OPERATIONS.MINT]: () => {
+        const mintContractArgs: {
+          address: Address;
+          functionName: "mint";
+          args: [Address, bigint];
+        } = {
+          address: selectedContract.address,
+          functionName: "mint",
+          args: [targetAddress, parseUnits(amount, selectedContract.decimals)],
+        };
+
+        if (selectedContract.name === "WT18_DAI") {
+          writeContract({
+            abi: WT18_DAI_ABI,
+            ...mintContractArgs,
+          });
+        } else if (selectedContract.name === "WT6_USDC") {
+          writeContract({
+            abi: WT6_USDC_ABI,
+            ...mintContractArgs,
+          });
+        }
+      },
+      [OPERATIONS.ALLOWANCE]: () => {
+        const allowanceContractArgs: {
+          address: Address;
+          functionName: "approve";
+          args: [Address, bigint];
+        } = {
+          address: selectedContract.address,
+          functionName: "approve",
+          args: [
+            targetAddress,
+            maxAllowanceChecked
+              ? maxUint256
+              : parseUnits(amount, selectedContract.decimals),
+          ],
+        };
+        if (selectedContract.name === "WT18_DAI") {
+          writeContract({
+            abi: WT18_DAI_ABI,
+            ...allowanceContractArgs,
+          });
+        } else if (selectedContract.name === "WT6_USDC") {
+          writeContract({
+            abi: WT6_USDC_ABI,
+            ...allowanceContractArgs,
+          });
+        }
+      },
+    };
+
+    contractCalls[operationType]();
   }, [
     account.address,
     amount,
     maxAllowanceChecked,
     operationType,
-    selectedContract.abi,
     selectedContract.address,
     selectedContract.decimals,
+    selectedContract.name,
     targetAddress,
     writeContract,
   ]);
 
-  const getConfirmationDialogDescription = (): string => {
-    if (operationType === OPERATIONS.TRANSFER) {
-      return `You are about to transfer ${amount} ${selectedContract.name} to the address ${targetAddress}.`;
-    } else if (operationType === OPERATIONS.MINT) {
-      return `You are about to mint ${amount} ${selectedContract.name} for the address ${targetAddress}.`;
-    } else if (operationType === OPERATIONS.ALLOWANCE) {
-      return `You are about to approve an allowance of ${
+  const confirmationDialogTextOptions = {
+    [OPERATIONS.TRANSFER]: {
+      title: "Please confirm transfer",
+      description: `You are about to transfer ${amount} ${selectedContract.name} to the address ${targetAddress}.`,
+    },
+    [OPERATIONS.MINT]: {
+      title: "Please confirm mint",
+      description: `You are about to mint ${amount} ${selectedContract.name} for the address ${targetAddress}.`,
+    },
+    [OPERATIONS.ALLOWANCE]: {
+      title: "Please confirm allowance approve",
+      description: `You are about to approve an allowance of ${
         maxAllowanceChecked ? "MAX" : amount
-      } ${selectedContract.name} for the address ${targetAddress}.`;
-    }
-    return "";
+      } ${selectedContract.name} for the address ${targetAddress}.`,
+    },
+    fallback: { title: "", description: "" },
   };
 
-  const getConfirmationDialogTitle = (): string =>
-    `Please confirm ${
-      operationType === OPERATIONS.TRANSFER
-        ? "transfer"
-        : operationType === OPERATIONS.MINT
-        ? "mint"
-        : operationType === OPERATIONS.ALLOWANCE
-        ? "allowance approve"
-        : ""
-    }`;
-
   return {
-    getConfirmationDialogDescription,
-    getConfirmationDialogTitle,
+    confirmationDialogText:
+      confirmationDialogTextOptions[operationType || "fallback"],
     confirmTransaction,
     writeContractStatus,
     writeContractTxHash,

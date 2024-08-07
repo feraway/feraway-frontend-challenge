@@ -11,7 +11,13 @@ import {
   useReadContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { formatUnits, parseUnits, type Address } from "viem";
+import {
+  formatUnits,
+  parseUnits,
+  type Address,
+  erc20Abi,
+  isAddress,
+} from "viem";
 import { isValidEvmAddress } from "@/lib/utils/isValidEvmAddress";
 import { useStore } from "@/store";
 import {
@@ -63,8 +69,7 @@ export default function Home() {
 
   const {
     confirmTransaction,
-    getConfirmationDialogDescription,
-    getConfirmationDialogTitle,
+    confirmationDialogText,
     writeContractStatus,
     writeContractTxHash,
     writeContractError,
@@ -94,11 +99,11 @@ export default function Home() {
     fetchStatus: balanceFetchStatus,
   } = useReadContract({
     address: selectedContract.address,
-    abi: selectedContract.abi,
+    abi: erc20Abi,
     functionName: "balanceOf",
-    args: [account.address],
+    args: [account.address as Address],
     query: {
-      enabled: !!contract,
+      enabled: !!contract && !!account.address,
       refetchOnWindowFocus: false,
     },
   });
@@ -113,12 +118,16 @@ export default function Home() {
     fetchStatus: allowanceFetchStatus,
   } = useReadContract({
     address: selectedContract.address,
-    abi: selectedContract.abi,
+    abi: erc20Abi,
     functionName: "allowance",
-    args: [account.address, targetAddress],
+    args: [account.address as Address, targetAddress as Address],
     query: {
       enabled:
-        !!contract && !!targetAddress && operationType === OPERATIONS.ALLOWANCE,
+        !!contract &&
+        !!targetAddress &&
+        isAddress(targetAddress) &&
+        !!account.address &&
+        operationType === OPERATIONS.ALLOWANCE,
       refetchOnWindowFocus: false,
     },
   });
@@ -370,8 +379,8 @@ export default function Home() {
       </main>
 
       <ConfirmationDialog
-        title={getConfirmationDialogTitle()}
-        description={getConfirmationDialogDescription()}
+        title={confirmationDialogText.title}
+        description={confirmationDialogText.description}
         open={confirmationDialogOpen}
         onConfirm={() => {
           confirmTransaction();

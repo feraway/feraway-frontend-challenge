@@ -1,8 +1,7 @@
-import { type Address, type Abi } from "viem";
+import { type Address } from "viem";
 
 export type SupportedContractType = {
   name: string;
-  abi: Abi;
   address: Address;
   decimals: number;
 };
