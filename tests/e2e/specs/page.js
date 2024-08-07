@@ -16,7 +16,7 @@ describe("Page transfer and allowance", () => {
     cy.contains("Mint Tokens").click();
     cy.contains("Mint for yourself?").click();
     cy.findByPlaceholderText("Please set an amount").focus().type("1");
-    cy.contains("Confirm Mint").click();
+    cy.get("[role=confirm-button]").click();
     cy.get("[role=alertdialog]").contains("Confirm").click();
     // using confirmMetamaskPermissionToSpend instead of confirmMetamaskTransaction because the later was flaky
     cy.confirmMetamaskPermissionToSpend({ shouldWaitForPopupClosure: true });
@@ -34,7 +34,7 @@ describe("Page transfer and allowance", () => {
       .clear()
       .type(TARGET_WALLET);
     cy.findByPlaceholderText("Please set an amount").focus().type("0.0001");
-    cy.contains("Send Tokens").click();
+    cy.get("[role=confirm-button]").click();
     cy.contains("Confirm").click();
     cy.confirmMetamaskPermissionToSpend({ shouldWaitForPopupClosure: true });
     cy.contains("Last transaction pending");
