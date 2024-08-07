@@ -18,6 +18,7 @@ describe("Page transfer and allowance", () => {
     cy.findByPlaceholderText("Please set an amount").focus().type("1");
     cy.contains("Confirm Mint").click();
     cy.get("[role=alertdialog]").contains("Confirm").click();
+    // using confirmMetamaskPermissionToSpend instead of confirmMetamaskTransaction because the later was flaky
     cy.confirmMetamaskPermissionToSpend({ shouldWaitForPopupClosure: true });
     cy.contains("Last transaction pending");
     cy.contains("Last transaction confirmed", undefined, {

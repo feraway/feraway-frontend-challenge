@@ -70,3 +70,5 @@ pnpm test:e2e
 - Mobile support
 - Full TypeScript support (including ABIs)
 - Wrong Network detection and huminized balances/allowances
+
+This app was built and tested with Metamask, however, other wallets that accept the Testnet Sepolia should be usable through Rainbowkit/WalletConnect
