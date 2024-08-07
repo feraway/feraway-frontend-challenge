@@ -190,13 +190,11 @@ export default function Home() {
     !!amount && countDecimals(amount) <= selectedContract.decimals;
 
   // Buttons validations
-
   const getIsButtonDisabled = () => {
     if (
       !contract ||
       !isTargetAddressValid ||
-      !isDecimalsValid ||
-      (operationType !== OPERATIONS.ALLOWANCE && !amount)
+      (!isDecimalsValid && !maxAllowanceChecked)
     ) {
       return true;
     }

@@ -1,6 +1,5 @@
 export function truncateDecimals(number: string, decimalPlaces = 2) {
   const decimalPlace = number.indexOf(".");
-  console.log("logger", number, decimalPlace);
   if (decimalPlace === -1) {
     //No decimals
     return number;
