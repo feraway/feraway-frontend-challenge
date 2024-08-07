@@ -39,6 +39,7 @@ import { maxUint256 } from "viem";
 import { useConfirmTransaction } from "@/lib/hooks";
 import { CheckedStateType } from "@/types";
 import { countDecimals } from "@/lib/utils/countDecimals";
+import { truncateDecimals } from "@/lib/utils/truncateDecimals";
 
 const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
   (contract) => ({
@@ -248,7 +249,9 @@ export default function Home() {
           ) : (
             <>
               {balance
-                ? formatUnits(balance as bigint, selectedContract.decimals)
+                ? truncateDecimals(
+                    formatUnits(balance as bigint, selectedContract.decimals)
+                  )
                 : "---"}{" "}
               {selectedContract.name}
             </>
@@ -317,9 +320,11 @@ export default function Home() {
                       {isAllowanceMax
                         ? "MAX"
                         : !!allowance || allowance === BigInt(0)
-                        ? formatUnits(
-                            allowance as bigint,
-                            selectedContract.decimals
+                        ? truncateDecimals(
+                            formatUnits(
+                              allowance as bigint,
+                              selectedContract.decimals
+                            )
                           )
                         : "---"}
                     </>
