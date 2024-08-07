@@ -1,3 +1,3 @@
-function countDecimals(num: string) {
+export function countDecimals(num: string) {
   return (num.split(".")[1] || []).length;
 }

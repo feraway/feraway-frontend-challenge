@@ -38,6 +38,7 @@ import { SwitchNetwork } from "./components/switch-network";
 import { Title } from "./components/title";
 import { useConfirmTransaction } from "@/lib/hooks";
 import { CheckedStateType } from "@/types";
+import { countDecimals } from "@/lib/utils/countDecimals";
 
 const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
   (contract) => ({
@@ -184,12 +185,16 @@ export default function Home() {
     !isTransferAmountValid &&
     operationType === OPERATIONS.TRANSFER;
 
+  const isDecimalsValid =
+    !!amount && countDecimals(amount) <= selectedContract.decimals;
+
   // Buttons validations
 
   const getIsButtonDisabled = () => {
     if (
       !contract ||
       !isTargetAddressValid ||
+      !isDecimalsValid ||
       (operationType !== OPERATIONS.ALLOWANCE && !amount)
     ) {
       return true;
@@ -333,7 +338,7 @@ export default function Home() {
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Please set an amount"
         />
-        <div className="w-full flex flex-col items-center min-h-[70px]">
+        <div className="w-full flex flex-col items-center min-h-[40px]">
           {operationType === OPERATIONS.ALLOWANCE && (
             <div className="max-w-72 mt-5">
               <CheckboxWithText
@@ -345,12 +350,18 @@ export default function Home() {
             </div>
           )}
           {showTransferAmountError && (
-            <p className="text-red-700">
+            <p className="text-red-700 mt-3">
               Your transfer amount is larger than your balance
             </p>
           )}
+          {!!amount && !isDecimalsValid && (
+            <p className="text-red-700 mt-3">
+              You are using more decimals than your contract allows. Limit:{" "}
+              {selectedContract.decimals}
+            </p>
+          )}
         </div>
-        <div className="mt-5 mb-7 w-96 flex justify-center">
+        <div className="my-7 w-96 flex justify-center">
           {operationType && (
             <Button
               disabled={getIsButtonDisabled()}
