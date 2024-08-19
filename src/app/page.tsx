@@ -1,10 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Combobox, Input, Spinner } from "@/components/ui";
+import { Combobox } from "@/components/ui";
 import {
   ConfirmationDialog,
   ErrorDialog,
-  CheckboxWithText,
   LastTransactionStatus,
 } from "@/components";
 import {
@@ -15,6 +14,7 @@ import {
   SelectOperation,
   ConfirmOperationButton,
   TargetAddressInput,
+  AmountInput,
 } from "./components";
 import { SUPPORTED_CONTRACTS_SEPOLIA, OPERATIONS } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -24,7 +24,7 @@ import {
   useReadContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { formatUnits, parseUnits, type Address, erc20Abi } from "viem";
+import { parseUnits, type Address, erc20Abi } from "viem";
 import { isValidEvmAddress, countDecimals } from "@/lib/utils";
 import { useStore } from "@/store";
 import { useConfirmTransaction } from "@/lib/hooks";
@@ -43,7 +43,7 @@ const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
 export default function Home() {
   const account = useAccount();
   const chainId = useChainId();
-  const { targetAddress, setTargetAddress, contract, setContract } = useStore();
+  const { targetAddress, contract, setContract } = useStore();
   const [amount, setAmount] = useState("");
   const [operationType, setOperationType] = useState<OPERATIONS>();
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
@@ -161,17 +161,10 @@ export default function Home() {
     !!amount &&
     (balance as bigint) >= parseUnits(amount, selectedContract.decimals);
 
-  const showTransferAmountError =
-    !!contract &&
-    !!balance &&
-    !!amount &&
-    !isTransferAmountValid &&
-    operationType === OPERATIONS.TRANSFER;
-
   const isDecimalsValid =
     !!amount && countDecimals(amount) <= selectedContract.decimals;
 
-  // Buttons validations
+  // Button validations
   const getIsButtonDisabled = () => {
     if (
       !contract ||
@@ -239,37 +232,17 @@ export default function Home() {
           allowance={allowance}
         />
         <h2 className="text-2xl font-semibold my-3">Amount:</h2>
-        <Input
-          type="number"
-          className="max-w-96 mb-1"
-          disabled={!contract || !operationType || !!maxAllowanceChecked}
-          value={amount}
+        <AmountInput
+          amount={amount}
+          balance={balance}
+          isDecimalsValid={isDecimalsValid}
+          operationType={operationType}
+          isTransferAmountValid={isTransferAmountValid}
+          maxAllowanceChecked={maxAllowanceChecked}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="Please set an amount"
+          selectedContract={selectedContract}
+          setMaxAllowanceChecked={setMaxAllowanceChecked}
         />
-        <div className="w-full flex flex-col items-center min-h-[40px]">
-          {operationType === OPERATIONS.ALLOWANCE && (
-            <div className="max-w-72 mt-5">
-              <CheckboxWithText
-                labelText="Use max allowance?"
-                secondaryText="By giving an address max allowance they have control over all your funds for the desired token"
-                checked={maxAllowanceChecked}
-                onCheckedChange={setMaxAllowanceChecked}
-              />
-            </div>
-          )}
-          {showTransferAmountError && (
-            <p className="text-red-700 mt-3">
-              Your transfer amount is larger than your balance
-            </p>
-          )}
-          {!!amount && !isDecimalsValid && (
-            <p className="text-red-700 mt-3">
-              You are using more decimals than your contract allows. Limit:{" "}
-              {selectedContract.decimals}
-            </p>
-          )}
-        </div>
         <ConfirmOperationButton
           disabled={getIsButtonDisabled()}
           onClick={() => setConfirmationDialogOpen(true)}
