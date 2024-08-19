@@ -14,6 +14,7 @@ import {
   Balance,
   SelectOperation,
   ConfirmOperationButton,
+  TargetAddressInput,
 } from "./components";
 import { SUPPORTED_CONTRACTS_SEPOLIA, OPERATIONS } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -23,20 +24,9 @@ import {
   useReadContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import {
-  formatUnits,
-  parseUnits,
-  type Address,
-  erc20Abi,
-  isAddress,
-} from "viem";
-import {
-  isValidEvmAddress,
-  countDecimals,
-  truncateDecimals,
-} from "@/lib/utils";
+import { formatUnits, parseUnits, type Address, erc20Abi } from "viem";
+import { isValidEvmAddress, countDecimals } from "@/lib/utils";
 import { useStore } from "@/store";
-import { maxUint256 } from "viem";
 import { useConfirmTransaction } from "@/lib/hooks";
 import { CheckedStateType } from "@/types";
 
@@ -126,7 +116,7 @@ export default function Home() {
       enabled:
         !!contract &&
         !!targetAddress &&
-        isAddress(targetAddress) &&
+        isValidEvmAddress(targetAddress) &&
         !!account.address &&
         operationType === OPERATIONS.ALLOWANCE,
       refetchOnWindowFocus: false,
@@ -134,11 +124,6 @@ export default function Home() {
   });
 
   const allowanceLoading = allowanceFetchStatus === "fetching";
-
-  const isAllowanceMax =
-    allowance &&
-    formatUnits(allowance as bigint, selectedContract.decimals) ===
-      formatUnits(maxUint256, selectedContract.decimals);
 
   useEffect(() => {
     if (writeContractStatus === "error") {
@@ -171,8 +156,6 @@ export default function Home() {
   }, [blockHash, operationType, refetchBalance, refetchAllowance]);
 
   // Input validations
-  const isTargetAddressValid =
-    !!targetAddress && isValidEvmAddress(targetAddress);
   const isTransferAmountValid =
     !!balance &&
     !!amount &&
@@ -192,7 +175,7 @@ export default function Home() {
   const getIsButtonDisabled = () => {
     if (
       !contract ||
-      !isTargetAddressValid ||
+      !isValidEvmAddress(targetAddress) ||
       (!isDecimalsValid && !maxAllowanceChecked)
     ) {
       return true;
@@ -249,67 +232,12 @@ export default function Home() {
           contract={contract}
         />
         <h2 className="text-2xl font-semibold mb-5 mt-7">Target Address:</h2>
-        <Input
-          value={targetAddress || ""}
-          disabled={
-            !contract ||
-            !operationType ||
-            (operationType === OPERATIONS.MINT && targetAddress === userAddress)
-          }
-          onChange={(e) => setTargetAddress(e.target.value as Address)}
-          className="max-w-96"
-          placeholder="Please set a target address"
+        <TargetAddressInput
+          allowanceLoading={allowanceLoading}
+          operationType={operationType}
+          selectedContract={selectedContract}
+          allowance={allowance}
         />
-        <div className="w-full flex flex-col items-center min-h-[40px]">
-          {!!contract && !!targetAddress && !isTargetAddressValid && (
-            <p className="text-red-700 mt-3">
-              Please enter a valid EVM address
-            </p>
-          )}
-          {operationType === OPERATIONS.MINT && (
-            <div className="max-w-72 mt-5">
-              <CheckboxWithText
-                labelText="Mint for yourself?"
-                checked={targetAddress === userAddress}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setTargetAddress(userAddress);
-                  } else {
-                    setTargetAddress(null);
-                  }
-                }}
-              />
-            </div>
-          )}
-          {operationType === OPERATIONS.ALLOWANCE &&
-            !!targetAddress &&
-            isTargetAddressValid && (
-              <>
-                <p className="mt-3 text-center">
-                  Current allowance for this address:{" "}
-                  {allowanceLoading ? (
-                    <>
-                      <Spinner size={2} /> {selectedContract.name}
-                    </>
-                  ) : (
-                    <>
-                      {isAllowanceMax
-                        ? "MAX"
-                        : !!allowance || allowance === BigInt(0)
-                        ? truncateDecimals(
-                            formatUnits(
-                              allowance as bigint,
-                              selectedContract.decimals
-                            )
-                          )
-                        : "---"}
-                    </>
-                  )}{" "}
-                  {selectedContract.name}
-                </p>
-              </>
-            )}
-        </div>
         <h2 className="text-2xl font-semibold my-3">Amount:</h2>
         <Input
           type="number"
