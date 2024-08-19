@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Combobox, Button, Input, Spinner } from "@/components/ui";
+import { Combobox, Input, Spinner } from "@/components/ui";
 import {
   ConfirmationDialog,
   ErrorDialog,
@@ -13,6 +13,7 @@ import {
   Title,
   Balance,
   SelectOperation,
+  ConfirmOperationButton,
 } from "./components";
 import { SUPPORTED_CONTRACTS_SEPOLIA, OPERATIONS } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -341,32 +342,12 @@ export default function Home() {
             </p>
           )}
         </div>
-        <div className="my-7 w-96 flex justify-center">
-          {operationType && (
-            <Button
-              disabled={getIsButtonDisabled()}
-              onClick={() => setConfirmationDialogOpen(true)}
-              role="confirm-button"
-            >
-              {operationType === OPERATIONS.ALLOWANCE
-                ? "Set Allowance"
-                : operationType === OPERATIONS.TRANSFER
-                ? "Send Tokens"
-                : operationType === OPERATIONS.MINT
-                ? "Confirm Mint"
-                : null}
-            </Button>
-          )}
-          {(!operationType || !contract) && (
-            <Button disabled>
-              {!contract
-                ? "Please select a token"
-                : !operationType
-                ? "Please select an operation to perform"
-                : ""}
-            </Button>
-          )}
-        </div>
+        <ConfirmOperationButton
+          disabled={getIsButtonDisabled()}
+          onClick={() => setConfirmationDialogOpen(true)}
+          contract={contract}
+          operationType={operationType}
+        />
         <div className="md:w-[38rem] sm:w-full">
           <LastTransactionStatus
             isLoading={lastTransactionLoading}
