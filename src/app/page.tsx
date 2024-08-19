@@ -1,23 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  Combobox,
-  Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Spinner,
-} from "@/components/ui";
+import { Combobox, Button, Input, Spinner } from "@/components/ui";
 import {
   ConfirmationDialog,
   ErrorDialog,
   CheckboxWithText,
   LastTransactionStatus,
 } from "@/components";
-import { ConnectWallet, SwitchNetwork, Title, Balance } from "./components";
+import {
+  ConnectWallet,
+  SwitchNetwork,
+  Title,
+  Balance,
+  SelectOperation,
+} from "./components";
 import { SUPPORTED_CONTRACTS_SEPOLIA, OPERATIONS } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
@@ -245,22 +241,12 @@ export default function Home() {
           balance={balance}
           selectedContract={selectedContract}
         />
-
         <p className="mb-5">What would you like to do?</p>
-        <Select
-          value={operationType}
-          onValueChange={(o: OPERATIONS) => setOperationType(o)}
-          disabled={!contract}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select an Operation" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={OPERATIONS.TRANSFER}>Transfer Tokens</SelectItem>
-            <SelectItem value={OPERATIONS.ALLOWANCE}>Set Allowance</SelectItem>
-            <SelectItem value={OPERATIONS.MINT}>Mint Tokens</SelectItem>
-          </SelectContent>
-        </Select>
+        <SelectOperation
+          onValueChange={(o) => setOperationType(o)}
+          operationType={operationType}
+          contract={contract}
+        />
         <h2 className="text-2xl font-semibold mb-5 mt-7">Target Address:</h2>
         <Input
           value={targetAddress || ""}
