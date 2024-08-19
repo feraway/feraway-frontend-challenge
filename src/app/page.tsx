@@ -17,7 +17,7 @@ import {
   CheckboxWithText,
   LastTransactionStatus,
 } from "@/components";
-import { ConnectWallet, SwitchNetwork, Title } from "./components";
+import { ConnectWallet, SwitchNetwork, Title, Balance } from "./components";
 import { SUPPORTED_CONTRACTS_SEPOLIA, OPERATIONS } from "@/lib/consts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
@@ -240,23 +240,12 @@ export default function Home() {
           setValue={(x) => setContract(x as Address)}
           role="combobox-token"
         />
-        <h2 className="text-2xl font-semibold my-5 text-center text-wrap">
-          Balance:{" "}
-          {balanceLoading ? (
-            <>
-              <Spinner size={2} /> {selectedContract.name}
-            </>
-          ) : (
-            <>
-              {balance
-                ? truncateDecimals(
-                    formatUnits(balance as bigint, selectedContract.decimals)
-                  )
-                : "---"}{" "}
-              {selectedContract.name}
-            </>
-          )}
-        </h2>
+        <Balance
+          balanceLoading={balanceLoading}
+          balance={balance}
+          selectedContract={selectedContract}
+        />
+
         <p className="mb-5">What would you like to do?</p>
         <Select
           value={operationType}

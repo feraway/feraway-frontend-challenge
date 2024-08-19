@@ -5,7 +5,6 @@ import {
   useReducer,
   type ReactNode,
   type Dispatch,
-  type Reducer,
 } from "react";
 
 const storeInitialValue = {
