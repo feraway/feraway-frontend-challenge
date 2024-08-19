@@ -1,2 +1,2 @@
-export * from "./SupportedContractType";
-export * from "./CheckedStateType";
+export * from "./checked-state-type";
+export * from "./supported-contract-type";

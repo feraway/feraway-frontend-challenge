@@ -33,13 +33,15 @@ import {
   erc20Abi,
   isAddress,
 } from "viem";
-import { isValidEvmAddress } from "@/lib/utils/isValidEvmAddress";
+import {
+  isValidEvmAddress,
+  countDecimals,
+  truncateDecimals,
+} from "@/lib/utils";
 import { useStore } from "@/store";
 import { maxUint256 } from "viem";
 import { useConfirmTransaction } from "@/lib/hooks";
 import { CheckedStateType } from "@/types";
-import { countDecimals } from "@/lib/utils/countDecimals";
-import { truncateDecimals } from "@/lib/utils/truncateDecimals";
 
 const comboboxOptions = Object.keys(SUPPORTED_CONTRACTS_SEPOLIA).map(
   (contract) => ({
