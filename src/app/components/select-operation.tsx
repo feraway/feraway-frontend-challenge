@@ -1,3 +1,4 @@
+import { type Address } from "viem";
 import {
   Select,
   SelectContent,
@@ -5,7 +6,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui";
-import { type Address } from "viem";
 import { OPERATIONS } from "@/lib/consts";
 
 type SelectOperationProps = {

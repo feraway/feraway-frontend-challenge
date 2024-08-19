@@ -1,5 +1,4 @@
 import { formatUnits } from "viem";
-import { useStore } from "@/store";
 import { Spinner } from "@/components/ui";
 import { truncateDecimals } from "@/lib/utils";
 import { SupportedContractType } from "@/types";

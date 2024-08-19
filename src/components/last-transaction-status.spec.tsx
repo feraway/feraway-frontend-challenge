@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { LastTransactionStatus } from "./last-transaction-status";
-import userEvent from "@testing-library/user-event";
 
 const txHash = "0x0000000000000000000000000000000000000000";
 const error = "There was an error in your transaction";
